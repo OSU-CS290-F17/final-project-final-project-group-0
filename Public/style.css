@@ -1,0 +1,69 @@
+body{
+  background-color: #e0e0e0;
+  margin: 0px;
+}
+
+.content{
+  margin-left: 10vw;
+  width: 80vw;
+}
+
+/*Title bar*/
+#main-title-bar{
+  height: 120px;
+  width: 100vw;
+  background-color: #3030f0;
+  display: flex;
+}
+
+#main-title{
+  display: inline-block;
+  position: relative;
+  top: 10px;
+  height: 120px;
+}
+
+#title-logo{
+  width: 100px;
+  height: 100px;
+  margin: 10px 30px;
+}
+
+#main-title h1{
+  font-size: 75px;
+  margin: 0px;
+}
+
+/*User files and login buttons*/
+.title-user-info{
+  position: absolute;
+  top: 90px;
+  padding: 2px 5px;
+  border-radius: 5px;
+  background-color: #d0d0d0;
+}
+
+.title-user-info:hover{
+  cursor: pointer;
+}
+
+#current-user{
+  right: 100px;
+}
+
+#login-logout-button{
+  right: 25px;
+}
+
+/*Login modal*/
+.login-modal{
+  /*display: none;*/
+  position: absolute;
+  top: 120px;
+  right: 20px;
+
+  width: 150px;
+  height: 100px;
+
+  background-color: #4040b0;
+}

@@ -1,0 +1,34 @@
+Overview
+-Create, edit, and delete text and spreadsheet files
+
+Main page
+-Title bar
+  *Title
+  *Login / Log out
+    +Modal to log in
+    +Button to log out with popup
+-Marketing description
+
+File list page
+-Title bar
+  *Smaller than homepage
+  *Home button
+  *Displays username
+-Option bar
+  *New file
+    +Spreadsheet
+    +Text file
+  *Display file type checkbox (unchecked)
+  *Delete selected file[s]
+-List of files
+  *Select file[s]
+
+File page
+-Title bar
+  *Smaller than homepage
+  *Home button
+  *Username, when clicked leads to "File list page"
+-File bar
+  *Formatting options
+  *File name
+  *Original author's username
