@@ -1,7 +1,11 @@
 function showLoginModal(){
-  console.log("showLoginModal called");
+  var loginModal = document.getElementsByClassName("login-modal")[0];
+  loginModal.style.display = "inherit";
 }
 
-var loginButton = document.getElementById("login-logout-button");
-loginButton.addEventListener("click", showLoginModal);
-console.log("Script loaded");
+var showLoginModalButton = document.getElementById("login-logout-button");
+showLoginModalButton.addEventListener("click", showLoginModal);
+
+function submitLoginInfo(){
+  //
+}

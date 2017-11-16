@@ -73,7 +73,7 @@ function assembleContent(request){
 }
 
 
-function serverCall(req, res){
+function serverGetMethod(req, res){
   if(req.url==="/public/style.css"){
     res.statusCode = getStatusCode(req.url);
     res.setHeader("Content-Type", "text/css");
@@ -95,6 +95,13 @@ function serverCall(req, res){
     res.write(assembleTitleBar(req));
     res.write(assembleContent(req));
     res.write("\n</body>\n</html>");
+  }
+}
+
+
+function serverCall(req, res){
+  if(req.method==="GET"){
+    serverGetMethod(req, res);
   }
   res.end();
 }
