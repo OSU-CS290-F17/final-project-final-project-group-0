@@ -1,8 +1,11 @@
 var http = require("http");
 var fs = require("fs");
+var path = require("path");
 
 var stylesheet = fs.readFileSync("./public/style.css").toString();
 var titleScript = fs.readFileSync("./public/title.js").toString();
+
+var currentUser = "Alice";
 
 
 function strReplace(mainString, toReplace, newString){
@@ -29,8 +32,43 @@ function strReplace(mainString, toReplace, newString){
 }
 
 
+function assembleFileListPage(path){
+  var page;   //page to be returned
+  var fileList = fs.readdirSync("."+path);
+  if(fileList.length > 0){
+    var fileListString = "";
+    var c;
+    for(c=0; c < fileList.length; c++){
+      fileListString += '<p><a href="'+path+'/'+fileList[c].toString()+'">';
+      fileListString += fileList[c].toString()+'</p>';
+    }
+
+    page = fs.readFileSync("./public/file-list.html");
+    page = strReplace(page.toString(), "_user_", path.substring(7));
+    page = strReplace(page.toString(), "_file-list_", fileListString);
+  }
+  return page;
+}
+
+
+function assembleTextFileContent(path){
+  //
+}
+
+
+function assembleSpreadsheetContent(path){
+  //
+}
+
+
 function getStatusCode(path){
-  return 200;
+  var validPathsRegex = new RegExp("/$|/home$|^/files/|^/public/");
+  if(validPathsRegex.test(path)){
+    return 200;
+  }
+  else{
+    return 404;
+  }
 }
 
 
@@ -45,28 +83,40 @@ function assembleHeader(request){
 function assembleTitleBar(request){
   var titleBar;
   var path = request.url;
-  var currentUser = "Not Logged In";
+
+  titleBar = fs.readFileSync("./public/title.html").toString();
+  titleBar = strReplace(titleBar, "username", currentUser);
+  if(currentUser!=="Not Logged In"){   //user is logged in
+    titleBar = strReplace(titleBar, ">Login<", ">Logout<");
+  }
+
   if(path==="/" || path==="/home"){
-    // currentUser = fs.readFileSync("./files/username.txt").toString();
-    titleBar = fs.readFileSync("./public/title.html").toString();
-    titleBar = strReplace(titleBar, "username", currentUser);
-    if(false){   //user is logged in
-      titleBar = strReplace(titleBar, "Login", "Logout");
-    }
+    titleBar = strReplace(titleBar, "_title-bar-id_", "main-title-bar");
   }
   else{
-    titleBar = "Error";
+    titleBar = strReplace(titleBar, "_title-bar-id_", "secondary-title-bar");
   }
+
   return titleBar;
 }
 
 
 function assembleContent(request){
   var content;
-  if(request.url==="/" || request.url==="/home"){
+  var fileRegEx = new RegExp("^/files/");
+  if(request.url==="/" || request.url==="/home"){   //Main page
     content = fs.readFileSync("./public/main-page.html");
   }
-  else{
+  else if(fileRegEx.test(request.url)){ //List user's files
+    if(currentUser===request.url.substring(7)){
+      // content = fs.readdirSync(request.url);
+      content = assembleFileListPage(request.url);
+    }
+    else{
+      content = "Access denied";
+    }
+  }
+  else{   //404 page
     content = fs.readFileSync("./public/404.html");
   }
   return content;
@@ -74,20 +124,18 @@ function assembleContent(request){
 
 
 function serverGetMethod(req, res){
+  res.statusCode = getStatusCode(req.url);
   if(req.url==="/public/style.css"){
-    res.statusCode = getStatusCode(req.url);
     res.setHeader("Content-Type", "text/css");
     res.write(stylesheet);
   }
-  else if(/js/.test(req.url)){
-    res.statusCode = getStatusCode(req.url);
+  else if(/js$/.test(req.url)){
     res.setHeader("Content-Type", "text/js");
-    if(req.url==="/title.js"){
+    if(/title.js/.test(req.url)){
       res.write(titleScript);
     }
   }
   else{
-    res.statusCode = getStatusCode(req.url);
     res.setHeader("Content-Type", "text/html");
     res.write("<html>\n");
     res.write(assembleHeader(req));

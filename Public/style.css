@@ -6,9 +6,19 @@ body{
 .content{
   margin-left: 10vw;
   width: 80vw;
+
+  font-size: 15px;
 }
 
-/*Title bar*/
+.content h2{
+  font-size: 30px;
+}
+
+.content h3{
+  font-size: 25px;
+}
+
+/*Main title bar*/
 #main-title-bar{
   height: 120px;
   width: 100vw;
@@ -16,33 +26,74 @@ body{
   display: flex;
 }
 
-#main-title{
-  position: relative;
-  top: 10px;
-
-  height: 120px;
-  display: inline-block;
-}
-
-#title-logo{
+#main-title-bar #title-logo{
   width: 100px;
   height: 100px;
   margin: 10px 30px;
 }
 
-#main-title h1{
+#main-title-bar #main-title{
+  top: 10px;
+  height: 120px;
+}
+
+#main-title-bar>#main-title h1{
   font-size: 75px;
   margin: 0px;
+}
+
+/*Secondary title bar*/
+#secondary-title-bar{
+  height: 60px;
+  width: 100vw;
+  background-color: #3030f0;
+  display: flex;
+}
+
+#secondary-title-bar #title-logo{
+  width: 50px;
+  height: 50px;
+  margin: 5px 15px;
+}
+
+#secondary-title-bar #main-title{
+  top: 5px;
+  height: 60px;
+}
+
+#secondary-title-bar>#main-title h1{
+  font-size: 37px;
+  margin: 0px;
+}
+
+/*Title bar*/
+#main-title{
+  position: relative;
+  display: inline-block;
+}
+
+#main-title a{
+  text-decoration: none;
+  color: black;
 }
 
 /*User files and login buttons*/
 .title-user-info{
   position: absolute;
-  top: 90px;
 
   padding: 2px 5px;
   border-radius: 5px;
+
   background-color: #d0d0d0;
+  font-size: 15px;
+}
+
+#main-title-bar .title-user-info{
+  top: 90px;
+}
+
+#secondary-title-bar .title-user-info{
+  top: 30px;
 }
 
 .title-user-info:hover{
@@ -71,7 +122,7 @@ body{
   background-color: #6080c0;
 }
 
-.input-div>input{
+.input-div input{
   margin: 10px;
   margin-bottom: 0px;
 
@@ -93,4 +144,38 @@ body{
 
 .submit-login-info-button:hover{
   cursor: pointer;
+}
+
+/*User files page*/
+#file-list{
+  height: 550px;
+  border-radius: 10px;
+
+  background-color: white;
+}
+
+#file-list p{
+  position: relative;
+  top: 10px;
+  left: 10px;
+
+  width: calc(100% - 20px);
+  border-bottom: 1px solid black;
+  font-size: 15px;
+}
+
+#file-list a{
+  text-decoration: none;
+  color: black;
+}
+
+/*404 Page*/
+#error-404>h1{
+  font-size: 75px;
+}
+
+#error-404{
+  font-size: 30px;
+  text-align: center;
+  color: #4f4040;
 }
