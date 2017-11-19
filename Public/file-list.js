@@ -1,6 +1,82 @@
 var selecting = false;
 var selectedFiles = document.getElementsByClassName('selected');
 
+function askWithPopup(question, leftOption, rightOption){
+  var body = document.getElementsByTagName('body')[0];
+  var popupBackground = document.createElement("div");
+  popupBackground.style.width = "100vw";
+  popupBackground.style.height = "100vh";
+  popupBackground.style.position = "fixed";
+  popupBackground.style.top = "0px";
+  popupBackground.style.left = "0px";
+  popupBackground.style.backgroundColor = "rgba(0,0,0,0.25)";
+  popupBackground.id = "questionBackground";
+  body.appendChild(popupBackground);
+
+  var popup = document.createElement("div");
+  popup.style.width = "200px";
+  popup.style.height = "140px";
+  popup.style.position = "fixed";
+  popup.style.top = "calc(50vh - 70px)";
+  popup.style.left = "calc(50vw - 100px)";
+  popup.style.borderRadius = "10px";
+  popup.style.backgroundColor = "#ffffff";
+  popup.id = "questionPopup";
+  body.appendChild(popup);
+
+  var popupQuestion = document.createElement("div");
+  popupQuestion.textContent = question;
+  popupQuestion.style.fontSize = "25px";
+  popupQuestion.style.textAlign = "center";
+  popupQuestion.style.marginTop = "20px";
+  popup.appendChild(popupQuestion);
+
+  var leftButton = document.createElement("div");
+  leftButton.textContent = leftOption;
+  leftButton.style.textAlign = "center";
+  leftButton.style.fontSize = "15px";
+  leftButton.style.width = "90px";
+  leftButton.style.display = "inline-block";
+  leftButton.style.marginLeft = "6px";
+  leftButton.style.marginRight = "2px";
+  leftButton.style.marginTop = "50px";
+  leftButton.style.border = "1px solid black";
+  leftButton.style.borderRadius = "5px";
+  popup.appendChild(leftButton);
+
+  var rightButton = document.createElement("div");
+  rightButton.textContent = rightOption;
+  rightButton.style.textAlign = "center";
+  rightButton.style.fontSize = "15px";
+  rightButton.style.width = "90px";
+  rightButton.style.display = "inline-block";
+  rightButton.style.marginLeft = "2px";
+  rightButton.style.marginRight = "6px";
+  rightButton.style.marginTop = "50px";
+  rightButton.style.border = "1px solid black";
+  rightButton.style.borderRadius = "5px";
+  popup.appendChild(rightButton);
+
+  var userHasResponded = false;
+  var userResponse;
+  leftButton.addEventListener('click', function (){
+    userHasResponded = true;
+    userResponse = "left";
+  });
+  rightButton.addEventListener('click', function (){
+    userHasResponded = true;
+    userResponse = "right";
+  });
+
+  // while(!userHasResponded);   //wait for user response
+  popup.removeChild(leftButton);
+  popup.removeChild(rightButton);
+  popup.removeChild(popupQuestion);
+  body.removeChild(popup);
+  body.removeChild(popupBackground);
+  return userResponse;
+}
+
 function showNewFilePopup(){
   var newFilePopup = document.getElementById("popup-background");
   newFilePopup.style.display = "inherit";
@@ -13,19 +89,21 @@ function hideNewFilePopup(){
   newFilePopup.childNodes[1].style.display = "none";
 }
 
-function createNewFile(){   //completely broken
+function clearNewFilePopup(){
+  var newFileInput = document.getElementById('file-name-input');
+  newFileInput.childNodes[3].value = "";
+}
+
+function createNewFile(){
   var fileName = document.getElementById('file-name-input').childNodes[3].value;
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", window.location.href, true);
-  xhr.onreadystatechange = function () {
-    if(xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-      console.log(xhr.responseText);
-    }
+  var request = new XMLHttpRequest();
+  request.open("POST", window.location.href, true);
+  request.onload = function (){
+    window.location.reload(true);
   };
-  xhr.send(fileName);
-  // var request = new XMLHttpRequest();
-  // request.open("POST", window.location.host, true);
-  // request.send(fileName);
+  request.send(fileName);
+  hideNewFilePopup();
+  clearNewFilePopup();
 }
 
 function selectFiles(){
@@ -65,14 +143,17 @@ function fileClicked(event){
 function deleteSelectedFiles(){
   for(var b=0; b < selectedFiles.length; b++){
     var request = new XMLHttpRequest();
-    request.open("DELETE", selectedFiles[a].textContent, true);
-    request.send(NULL);
-  }
-  if(selectFiles.length>0){
-    window.location.reload(true);
+    request.open("DELETE", window.location.href, true);
+    request.onload = function (){
+      window.location.reload(true);
+    };
+    request.send(selectedFiles[b].textContent);
   }
 }
 
+
+console.log(askWithPopup("Hello?", "Hello", "Goodbye"));
+clearNewFilePopup();
 
 var fileListBox = document.getElementById('file-list');
 fileListBox.addEventListener("click", fileClicked);

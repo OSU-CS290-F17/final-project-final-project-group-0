@@ -158,17 +158,44 @@ function serverGetMethod(req, res){   //called for GET requests
     res.write(assembleContent(req));
     res.write("\n</body>\n</html>");
   }
+  res.end();
 }
 
 
 function serverPostMethod(req, res){
-  console.log("Posted");
-  res.write("Posted");
+  var fileName = [];
+  req.on('data', (chunk) => {   //collect the data sent
+    fileName.push(chunk);
+  }).on('end', () => {  //run when data is finished
+    fileName = Buffer.concat(fileName).toString();
+    var filePath = path.join("Files", currentUser, fileName);
+    fs.open(filePath, "w", function (err, fd){
+      if(err){
+        throw err;
+      }
+      else{
+        res.statusCode = 201;
+        res.statusMessage = "Successfully posted";
+        res.setHeader("Location", filePath);
+        res.end();
+        fs.closeSync(fd);
+      }
+    });
+  })
 }
 
 
 function serverDeleteMethod(req, res){
-  //
+  var toDelete = [];
+  req.on('data', (chunk) => {   //collect the data sent
+    toDelete.push(chunk);
+  }).on('end', () => {  //run when data is finished
+    toDelete = Buffer.concat(toDelete).toString();
+    toDelete = path.join("Files", currentUser, toDelete);
+    fs.unlinkSync(toDelete);
+    res.statusCode = 204;   //code for success, but not sending content
+    res.end();
+  })
 }
 
 
@@ -176,13 +203,12 @@ function serverCall(req, res){
   if(req.method==="GET"){
     serverGetMethod(req, res);
   }
-  else if(res.method==="POST"){
+  else if(req.method==="POST"){
     serverPostMethod(req, res);
   }
   else if(req.method==="DELETE"){
     serverDeleteMethod(req, res);
   }
-  res.end();
 }   //main function which responds to server calls
 
 
