@@ -4,6 +4,7 @@ var path = require("path");
 
 var stylesheet = fs.readFileSync("./public/style.css").toString();
 var titleScript = fs.readFileSync("./public/title.js").toString();
+var fileListScript = fs.readFileSync("./public/file-list.js").toString();
 
 var currentUser = "Alice";
 
@@ -33,19 +34,21 @@ function strReplace(mainString, toReplace, newString){
 
 
 function assembleFileListPage(path){
-  var page;   //page to be returned
+  var page = fs.readFileSync("./public/file-list.html");  //page to be returned
+  page = strReplace(page.toString(), "_user_", path.substring(7));
+
   var fileList = fs.readdirSync("."+path);
   if(fileList.length > 0){
     var fileListString = "";
     var c;
     for(c=0; c < fileList.length; c++){
-      fileListString += '<p><a href="'+path+'/'+fileList[c].toString()+'">';
+      fileListString += '<p class="file"><a href="'+path+'/'+fileList[c].toString()+'">';
       fileListString += fileList[c].toString()+'</p>';
     }
-
-    page = fs.readFileSync("./public/file-list.html");
-    page = strReplace(page.toString(), "_user_", path.substring(7));
     page = strReplace(page.toString(), "_file-list_", fileListString);
+  }
+  else{
+    page = strReplace(page.toString(), "_file-list_", "<p>No files exist for this user</p>");
   }
   return page;
 }
@@ -72,10 +75,15 @@ function getStatusCode(path){
 }
 
 
-function assembleHeader(request){
+function assembleHeader(path){
   var header;
   header = fs.readFileSync("./public/header.html").toString();
-  header = strReplace(header, "page_title", "Main Page");
+  if(path==="/" || path==="/home"){
+    header = strReplace(header, "page_title", "Generic Company");
+  }
+  else if(true){
+    header = strReplace(header, "page_title", "User Files");
+  }
   return header;
 }
 
@@ -85,9 +93,12 @@ function assembleTitleBar(request){
   var path = request.url;
 
   titleBar = fs.readFileSync("./public/title.html").toString();
-  titleBar = strReplace(titleBar, "username", currentUser);
   if(currentUser!=="Not Logged In"){   //user is logged in
     titleBar = strReplace(titleBar, ">Login<", ">Logout<");
+    titleBar = strReplace(titleBar, "username", currentUser+"'s Files");
+  }
+  else{
+    titleBar = strReplace(titleBar, "username", currentUser);
   }
 
   if(path==="/" || path==="/home"){
@@ -123,22 +134,25 @@ function assembleContent(request){
 }
 
 
-function serverGetMethod(req, res){
+function serverGetMethod(req, res){   //called for GET requests
   res.statusCode = getStatusCode(req.url);
-  if(req.url==="/public/style.css"){
+  if(req.url==="/public/style.css"){  //handle css requests
     res.setHeader("Content-Type", "text/css");
     res.write(stylesheet);
   }
-  else if(/js$/.test(req.url)){
+  else if(/js$/.test(req.url)){   //handle JS requests
     res.setHeader("Content-Type", "text/js");
     if(/title.js/.test(req.url)){
       res.write(titleScript);
     }
+    else if(/file-list.js/.test(req.url)){
+      res.write(fileListScript);
+    }
   }
-  else{
+  else{   //handle HTML requests
     res.setHeader("Content-Type", "text/html");
     res.write("<html>\n");
-    res.write(assembleHeader(req));
+    res.write(assembleHeader(req.url));
     res.write("\n<body>");
     res.write(assembleTitleBar(req));
     res.write(assembleContent(req));
@@ -147,12 +161,29 @@ function serverGetMethod(req, res){
 }
 
 
+function serverPostMethod(req, res){
+  console.log("Posted");
+  res.write("Posted");
+}
+
+
+function serverDeleteMethod(req, res){
+  //
+}
+
+
 function serverCall(req, res){
   if(req.method==="GET"){
     serverGetMethod(req, res);
   }
+  else if(res.method==="POST"){
+    serverPostMethod(req, res);
+  }
+  else if(req.method==="DELETE"){
+    serverDeleteMethod(req, res);
+  }
   res.end();
-}
+}   //main function which responds to server calls
 
 
 var server = http.createServer(serverCall);

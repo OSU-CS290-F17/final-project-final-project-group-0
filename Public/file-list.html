@@ -1,6 +1,25 @@
+<script src="./public/file-list.js" charset="utf-8" defer></script>
 <div class="content">
   <h2>_user_'s Files</h2>
+  <div id="file-options">
+    <span id="new-file">New File</span>
+    <span id="delete-files">Delete Selected Files</span>
+    <span id="select-files">Select</span>
+  </div>
   <div id="file-list">
     _file-list_
+  </div>
+  <div id="popup-background">
+    <div id="new-file-popup">
+      <div id="new-file-title">New File</div>
+      <div id="file-name-input">
+        <label for="file-name">Name:</label>
+        <input type="text" name="file-name" value="" title="Name of the new file(May not contain special characters)">
+      </div>
+      <div id="popup-buttons">
+        <span>Create File</span>
+        <span>Cancel</span>
+      </div>
+    </div>
   </div>
 </div>

@@ -1,11 +1,9 @@
 // function changeUser(newUser){
-//   var displayedUser = document.getElementById("current-user");
-//   displayedUser.textContent = newUser;
 // }
 //
-// function showLoginModal(){
-//   var loginModal = document.getElementsByClassName("login-modal")[0];
-//   loginModal.style.display = "inherit";
+// function showLoginPopup(){
+//   var loginPopup = document.getElementsByClassName("login-popup")[0];
+//   loginPopup.style.display = "inherit";
 // }
 //
 // function logoutUser(){
@@ -13,6 +11,7 @@
 //   document.getElementById("login-logout-button").textContent = "Login";
 // }
 var currentUser = document.getElementById("current-user").textContent;
+currentUser = currentUser.substring(0, currentUser.length-8);
 
 function loginLogoutButtonClicked(){
   alert("User functionality is not currently implemented, sorry");
@@ -20,12 +19,12 @@ function loginLogoutButtonClicked(){
   //   logoutUser();
   // }
   // else{
-  //   showLoginModal();
+  //   showLoginPopup();
   // }
 }
 
-var showLoginModalButton = document.getElementById("login-logout-button");
-showLoginModalButton.addEventListener("click", loginLogoutButtonClicked);
+var showLoginPopupButton = document.getElementById("login-logout-button");
+showLoginPopupButton.addEventListener("click", loginLogoutButtonClicked);
 
 
 function userButtonClicked(){

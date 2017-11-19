@@ -1,9 +1,11 @@
 body{
   background-color: #e0e0e0;
   margin: 0px;
+  font-family: sans-serif;
 }
 
 .content{
+  margin: 0px;
   margin-left: 10vw;
   width: 80vw;
 
@@ -12,10 +14,12 @@ body{
 
 .content h2{
   font-size: 30px;
+  font-family: serif;
 }
 
 .content h3{
   font-size: 25px;
+  font-family: serif;
 }
 
 /*Main title bar*/
@@ -108,8 +112,8 @@ body{
   right: 25px;
 }
 
-/*Login modal*/
-.login-modal{
+/*Login popup*/
+.login-popup{
   display: none;
   position: absolute;
   top: 120px;
@@ -148,25 +152,100 @@ body{
 
 /*User files page*/
 #file-list{
-  height: 550px;
-  border-radius: 10px;
+  min-height: 500px;
+  border-bottom-right-radius: 10px;
+  border-bottom-left-radius: 10px;
 
   background-color: white;
 }
 
+
+#file-options{
+  padding-top: 5px;
+  padding-bottom: 5px;
+
+  border-top-right-radius: 10px;
+  border-top-left-radius: 10px;
+
+  color: white;
+  background-color: #6060f0;
+}
+
+#file-options span{
+  margin-left: 20px;
+}
+
+#file-options span:hover{
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+#delete-files{
+  color: grey;
+}
+
 #file-list p{
+  margin: 0px;
+
   position: relative;
   top: 10px;
   left: 10px;
 
   width: calc(100% - 20px);
+}
+
+#file-list .file{
+  margin-bottom: 15px;
   border-bottom: 1px solid black;
-  font-size: 15px;
 }
 
 #file-list a{
   text-decoration: none;
   color: black;
+}
+
+#file-list .selected{
+  background-color: yellow;
+}
+
+/*New file popup*/
+#popup-background{
+  display: none;
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.25);
+}
+
+#new-file-popup{
+  display: none;
+  position: fixed;
+  top: calc(50vh - 70px);
+  left: calc(50vw - 100px);
+
+  height: 140px;
+  width: 200px;
+  border-radius: 10px;
+
+  background-color: #70a8d8;
+}
+
+#popup-buttons{
+  width: 200px;
+  margin-top: 50px;
+}
+
+#popup-buttons span{
+  background-color: #8de08d;
+  border: 1px solid #8de08d;
+}
+
+#popup-buttons span:hover{
+  cursor:pointer;
+  background-color: white;
+  border: 1px solid black;
 }
 
 /*404 Page*/
