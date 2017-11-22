@@ -9,6 +9,7 @@ var fileListScript = fs.readFileSync("./public/file-list.js").toString();
 var currentUser = "Alice";
 
 
+// Replaces all instances of toReplace with newString in mainString
 function strReplace(mainString, toReplace, newString){
   var substringBefore, substringAfter;
   var isIn = false;
@@ -33,18 +34,26 @@ function strReplace(mainString, toReplace, newString){
 }
 
 
+// Creates and returns the html content for the file list page
 function assembleFileListPage(path){
   var page = fs.readFileSync("./public/file-list.html");  //page to be returned
   page = strReplace(page.toString(), "_user_", path.substring(7));
 
+  var numFiles = 0;
+  var fileListString = "";
+
   var fileList = fs.readdirSync("."+path);
-  if(fileList.length > 0){
-    var fileListString = "";
-    var c;
-    for(c=0; c < fileList.length; c++){
-      fileListString += '<p class="file"><a href="'+path+'/'+fileList[c].toString()+'">';
-      fileListString += fileList[c].toString()+'</p>';
+  var currentFileName = "";
+  for(var c=0; c < fileList.length; c++){
+    if(fileList[c].toString().includes(".json")){
+      numFiles++;
+      currentFileName = fileList[c].toString().substring(0, fileList[c].toString().length-5);
+      fileListString += '<p class="file"><a href="'+path+'/'+currentFileName+'">';
+      fileListString += currentFileName+'</a></p>';
     }
+  }
+
+  if(numFiles>=1){
     page = strReplace(page.toString(), "_file-list_", fileListString);
   }
   else{
@@ -54,6 +63,7 @@ function assembleFileListPage(path){
 }
 
 
+// Creates and returns the html content for a text editing page
 function assembleTextFileContent(path){
   //
 }
@@ -64,6 +74,7 @@ function assembleSpreadsheetContent(path){
 }
 
 
+// Returns a number representing the status code to be sent to the client
 function getStatusCode(path){
   var validPathsRegex = new RegExp("/$|/home$|^/files/|^/public/");
   if(validPathsRegex.test(path)){
@@ -75,6 +86,7 @@ function getStatusCode(path){
 }
 
 
+// Assembles and returns the <head> tag for the page
 function assembleHeader(path){
   var header;
   header = fs.readFileSync("./public/header.html").toString();
@@ -88,6 +100,7 @@ function assembleHeader(path){
 }
 
 
+// Assembles and returns the title bar at the top of the page
 function assembleTitleBar(request){
   var titleBar;
   var path = request.url;
@@ -112,6 +125,7 @@ function assembleTitleBar(request){
 }
 
 
+// Assembles and returns html content for all pages
 function assembleContent(request){
   var content;
   var fileRegEx = new RegExp("^/files/");
@@ -120,7 +134,6 @@ function assembleContent(request){
   }
   else if(fileRegEx.test(request.url)){ //List user's files
     if(currentUser===request.url.substring(7)){
-      // content = fs.readdirSync(request.url);
       content = assembleFileListPage(request.url);
     }
     else{
@@ -134,7 +147,8 @@ function assembleContent(request){
 }
 
 
-function serverGetMethod(req, res){   //called for GET requests
+// Called on GET requests, sends response body
+function serverGetMethod(req, res){
   res.statusCode = getStatusCode(req.url);
   if(req.url==="/public/style.css"){  //handle css requests
     res.setHeader("Content-Type", "text/css");
@@ -162,6 +176,7 @@ function serverGetMethod(req, res){   //called for GET requests
 }
 
 
+// Called on POST requests, sends response back
 function serverPostMethod(req, res){
   var fileName = [];
   req.on('data', (chunk) => {   //collect the data sent
@@ -169,6 +184,7 @@ function serverPostMethod(req, res){
   }).on('end', () => {  //run when data is finished
     fileName = Buffer.concat(fileName).toString();
     var filePath = path.join("Files", currentUser, fileName);
+    filePath += ".json";
     fs.open(filePath, "w", function (err, fd){
       if(err){
         throw err;
@@ -185,13 +201,14 @@ function serverPostMethod(req, res){
 }
 
 
+// Called on DELETE requests, sends response back without a body
 function serverDeleteMethod(req, res){
   var toDelete = [];
   req.on('data', (chunk) => {   //collect the data sent
     toDelete.push(chunk);
   }).on('end', () => {  //run when data is finished
     toDelete = Buffer.concat(toDelete).toString();
-    toDelete = path.join("Files", currentUser, toDelete);
+    toDelete = path.join("Files", currentUser, toDelete+".json");
     fs.unlinkSync(toDelete);
     res.statusCode = 204;   //code for success, but not sending content
     res.end();
@@ -199,6 +216,7 @@ function serverDeleteMethod(req, res){
 }
 
 
+// Takes request and calls appropriate function
 function serverCall(req, res){
   if(req.method==="GET"){
     serverGetMethod(req, res);
@@ -216,5 +234,3 @@ var server = http.createServer(serverCall);
 server.listen(2000, function (){
   console.log("==Server started.");
 });
-
-// console.log(/html/.test("public.html"));

@@ -1,7 +1,7 @@
 var selecting = false;
 var selectedFiles = document.getElementsByClassName('selected');
 
-function askWithPopup(question, leftOption, rightOption){
+function confirmDelete(){
   var body = document.getElementsByTagName('body')[0];
   var popupBackground = document.createElement("div");
   popupBackground.style.width = "100vw";
@@ -25,56 +25,58 @@ function askWithPopup(question, leftOption, rightOption){
   body.appendChild(popup);
 
   var popupQuestion = document.createElement("div");
-  popupQuestion.textContent = question;
-  popupQuestion.style.fontSize = "25px";
+  popupQuestion.textContent = "Are you sure you want to delete the selected file(s)?";
+  popupQuestion.style.fontSize = "20px";
   popupQuestion.style.textAlign = "center";
   popupQuestion.style.marginTop = "20px";
   popup.appendChild(popupQuestion);
 
   var leftButton = document.createElement("div");
-  leftButton.textContent = leftOption;
+  leftButton.textContent = "Yes";
+  leftButton.classList += "button";
   leftButton.style.textAlign = "center";
   leftButton.style.fontSize = "15px";
   leftButton.style.width = "90px";
   leftButton.style.display = "inline-block";
   leftButton.style.marginLeft = "6px";
   leftButton.style.marginRight = "2px";
-  leftButton.style.marginTop = "50px";
+  leftButton.style.marginTop = "20px";
+  leftButton.style.backgroundColor = "antiquewhite";
   leftButton.style.border = "1px solid black";
   leftButton.style.borderRadius = "5px";
   popup.appendChild(leftButton);
 
   var rightButton = document.createElement("div");
-  rightButton.textContent = rightOption;
+  rightButton.textContent = "No";
+  rightButton.classList += "button";
   rightButton.style.textAlign = "center";
   rightButton.style.fontSize = "15px";
   rightButton.style.width = "90px";
   rightButton.style.display = "inline-block";
   rightButton.style.marginLeft = "2px";
   rightButton.style.marginRight = "6px";
-  rightButton.style.marginTop = "50px";
+  rightButton.style.marginTop = "20px";
+  rightButton.style.backgroundColor = "antiquewhite";
   rightButton.style.border = "1px solid black";
   rightButton.style.borderRadius = "5px";
   popup.appendChild(rightButton);
 
-  var userHasResponded = false;
-  var userResponse;
   leftButton.addEventListener('click', function (){
-    userHasResponded = true;
-    userResponse = "left";
-  });
-  rightButton.addEventListener('click', function (){
-    userHasResponded = true;
-    userResponse = "right";
+    deleteSelectedFiles();
+    popup.removeChild(leftButton);
+    popup.removeChild(rightButton);
+    popup.removeChild(popupQuestion);
+    body.removeChild(popup);
+    body.removeChild(popupBackground);
   });
 
-  // while(!userHasResponded);   //wait for user response
-  popup.removeChild(leftButton);
-  popup.removeChild(rightButton);
-  popup.removeChild(popupQuestion);
-  body.removeChild(popup);
-  body.removeChild(popupBackground);
-  return userResponse;
+  rightButton.addEventListener('click', function (){
+    popup.removeChild(leftButton);
+    popup.removeChild(rightButton);
+    popup.removeChild(popupQuestion);
+    body.removeChild(popup);
+    body.removeChild(popupBackground);
+  });
 }
 
 function showNewFilePopup(){
@@ -99,7 +101,17 @@ function createNewFile(){
   var request = new XMLHttpRequest();
   request.open("POST", window.location.href, true);
   request.onload = function (){
-    window.location.reload(true);
+    var fileListBox = document.getElementById('file-list');
+    if(fileListBox.getElementsByClassName('file').length <= 0){
+      fileListBox.removeChild(fileListBox.childNodes[1]);
+    }
+    newFileContainer = document.createElement('p');
+    newFileContainer.classList += "file";
+    newFileElement = document.createElement('a');
+    newFileElement.textContent = fileName;
+    newFileElement.href = window.location.href+'/'+fileName;
+    newFileContainer.appendChild(newFileElement);
+    fileListBox.appendChild(newFileContainer);
   };
   request.send(fileName);
   hideNewFilePopup();
@@ -110,14 +122,18 @@ function selectFiles(){
   var selectButton = document.getElementById('select-files');
   if(!selecting){
     selecting = true;
-    selectButton.style.borderRadius = "5px";
+    selectButton.style.borderRadius = "3px";
+    selectButton.style.padding = "2px";
     selectButton.style.border = "1px solid black";
+    selectButton.style.backgroundColor = "orange";
   }
   else{
     selecting = false;
     selectButton.style.backgroundColor = "inherit";
+    selectButton.style.padding = "3px";
     selectButton.style.borderWidth = "0px";
-    document.getElementById('delete-files').style.color = "grey";
+    selectButton.style.backgroundColor = "inherit";
+    document.getElementById('delete-files').style.color = "#b3b3b3";
     while(selectedFiles.length>0){
       selectedFiles[0].classList.remove('selected');
     }
@@ -131,7 +147,7 @@ function fileClicked(event){
       event.target.classList.toggle('selected');
       selectedFiles = document.getElementsByClassName('selected');  //update array
       if(selectedFiles.length <= 0){  //check if selectFiles is empty
-        document.getElementById('delete-files').style.color = "grey";
+        document.getElementById('delete-files').style.color = "#b3b3b3";
       }
       else{
         document.getElementById('delete-files').style.color = "inherit";
@@ -141,20 +157,35 @@ function fileClicked(event){
 }
 
 function deleteSelectedFiles(){
+  document.getElementById('delete-files').style.color = "#b3b3b3";  //grey out 'deleteSelectedFiles' button
   for(var b=0; b < selectedFiles.length; b++){
     var request = new XMLHttpRequest();
     request.open("DELETE", window.location.href, true);
     request.onload = function (){
-      window.location.reload(true);
+      if(request.status>=200 && request.status<=299){ //if delete was successful
+        var fileListBox = document.getElementById('file-list');
+        for(var c=0; c < selectedFiles.length; c++){  //remove file client-side
+          fileListBox.removeChild(selectedFiles[c].parentNode);
+        }
+        if(fileListBox.getElementsByTagName('p').length <= 0){
+          var noFilesNotification = document.createElement('p');
+          noFilesNotification.textContent = "No files exist for this user";
+          document.getElementById('file-list').appendChild(noFilesNotification);
+        }
+      }
+      else{   //delete request failed
+        alert("Something went wrong with the request, please try again.");
+      }
+      selectFiles();
     };
     request.send(selectedFiles[b].textContent);
   }
 }
 
 
-console.log(askWithPopup("Hello?", "Hello", "Goodbye"));
 clearNewFilePopup();
 
+// Assign event listeners to various buttons
 var fileListBox = document.getElementById('file-list');
 fileListBox.addEventListener("click", fileClicked);
 
@@ -162,7 +193,7 @@ var addFileButton = document.getElementById('new-file');
 addFileButton.addEventListener("click", showNewFilePopup);
 
 var deleteFileButton = document.getElementById('delete-files');
-deleteFileButton.addEventListener("click", deleteSelectedFiles);
+deleteFileButton.addEventListener("click", confirmDelete);
 
 var selectFileButton = document.getElementById('select-files');
 selectFileButton.addEventListener("click", selectFiles);

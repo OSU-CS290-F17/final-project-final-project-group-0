@@ -22,6 +22,10 @@ body{
   font-family: serif;
 }
 
+.button:hover{
+  cursor: pointer;
+}
+
 /*Main title bar*/
 #main-title-bar{
   height: 120px;
@@ -100,10 +104,6 @@ body{
   top: 30px;
 }
 
-.title-user-info:hover{
-  cursor: pointer;
-}
-
 #current-user{
   right: 100px;
 }
@@ -134,7 +134,7 @@ body{
   border-radius: 5px;
 }
 
-.submit-login-info-button{
+#submit-login-info-button{
   position: relative;
   top: 20px;
   left: 62px;
@@ -144,10 +144,6 @@ body{
 
   background-color: #d8d8d8;
   text-align: center;
-}
-
-.submit-login-info-button:hover{
-  cursor: pointer;
 }
 
 /*User files page*/
@@ -172,6 +168,7 @@ body{
 }
 
 #file-options span{
+  padding: 3px;
   margin-left: 20px;
 }
 
@@ -181,7 +178,7 @@ body{
 }
 
 #delete-files{
-  color: grey;
+  color: #b3b3b3;
 }
 
 #file-list p{
@@ -214,6 +211,7 @@ body{
   position: fixed;
   top: 0px;
   left: 0px;
+
   width: 100vw;
   height: 100vh;
   background-color: rgba(0, 0, 0, 0.25);
@@ -232,9 +230,31 @@ body{
   background-color: #70a8d8;
 }
 
+#new-file-title{
+  text-align: center;
+  width: 200px;
+  margin-top: 8px;
+  font-size: 25px;
+}
+
+#file-name-input{
+  margin-top: 25px;
+  width: 200px;
+}
+
+#file-name-input label{
+  margin-left: 10px;
+}
+
+#file-name-input input{
+  width: 130px;
+  font-size: 15px;
+}
+
 #popup-buttons{
   width: 200px;
-  margin-top: 50px;
+  margin-top: 25px;
+  margin-left: 35px;
 }
 
 #popup-buttons span{
