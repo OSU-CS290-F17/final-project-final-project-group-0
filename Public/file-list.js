@@ -156,9 +156,11 @@ function fileClicked(event){
   }
 }
 
-function deleteSelectedFiles(){
+function deleteSelectedFiles(){ //broken
   document.getElementById('delete-files').style.color = "#b3b3b3";  //grey out 'deleteSelectedFiles' button
+  console.log(selectedFiles);
   for(var b=0; b < selectedFiles.length; b++){
+    console.log(selectedFiles);
     var request = new XMLHttpRequest();
     request.open("DELETE", window.location.href, true);
     request.onload = function (){
