@@ -10,36 +10,28 @@ var textFileEditScript = fs.readFileSync("./public/text-file-edit.js").toString(
 var currentUser = "Alice";
 
 
-// Replaces all instances of toReplace with newString in mainString
-function strReplace(mainString, toReplace, newString){
-  var substringBefore, substringAfter;
-  var isIn = false;
-  var a, b;
-  for(var a=0; a < mainString.length; a++){
-    if(mainString[a]===toReplace[0]){
-      isIn = true;
-      for(var b=0; b<toReplace.length; b++){
-        if(mainString[a+b]!==toReplace[b]){
-          isIn = false;
-        }
+// Returns a number representing the status code to be sent to the client
+function getStatusCode(requestPath){
+  var pathArray = requestPath.split('/');
+  if(pathArray.length===1 || pathArray[1]==="home" || pathArray.includes("public")){
+    return 200;
+  }
+  else if(pathArray[1]==="files" && pathArray[2]===currentUser){  //Files
+    if(pathArray.length<=3){  //File list
+      return 200;
+    }
+    else{ //Specific file
+      var fileList = fs.readdirSync(path.join(__dirname, pathArray[1], pathArray[2]));
+      if(fileList.includes(pathArray[3])){
+        return 200;
       }
-      if(isIn){
-        substringBefore = mainString.substring(0, a);
-        substringAfter = mainString.substring(a+toReplace.length, mainString.length);
-        mainString = substringBefore+newString+substringAfter;
-        mainString = strReplace(mainString, toReplace, newString);
+      else{
+        return 404;
       }
     }
   }
-  return mainString;
-}
-
-
-// Returns a number representing the status code to be sent to the client
-function getStatusCode(requestPath){
-  var validPathsRegex = new RegExp("/$|/home$|^/files/|^/public/");
-  if(validPathsRegex.test(requestPath)){
-    return 200;
+  else if(pathArray[1]==="files"){  //Files for wrong user
+    return 403;
   }
   else{
     return 404;
@@ -52,10 +44,10 @@ function assembleHeader(requestPath){
   var header;
   header = fs.readFileSync("./public/header.html").toString();
   if(requestPath==="/" || requestPath==="/home"){
-    header = strReplace(header, "page_title", "Generic Company");
+    header = header.replace("page_title", "Generic Company");
   }
   else if(true){
-    header = strReplace(header, "page_title", "User Files");
+    header = header.replace("page_title", "User Files");
   }
   return header;
 }
@@ -68,18 +60,18 @@ function assembleTitleBar(request){
 
   titleBar = fs.readFileSync("./public/title.html").toString();
   if(currentUser!=="Not Logged In"){   //user is logged in
-    titleBar = strReplace(titleBar, ">Login<", ">Logout<");
-    titleBar = strReplace(titleBar, "_username_", currentUser+"'s Files");
+    titleBar = titleBar.replace(">Login<", ">Logout<");
+    titleBar = titleBar.replace("_username_", currentUser+"'s Files");
   }
   else{
-    titleBar = strReplace(titleBar, "_username_", currentUser);
+    titleBar = titleBar.replace("_username_", currentUser);
   }
 
   if(path==="/" || path==="/home"){
-    titleBar = strReplace(titleBar, "_title-bar-id_", "main-title-bar");
+    titleBar = titleBar.replace("_title-bar-id_", "main-title-bar");
   }
   else{
-    titleBar = strReplace(titleBar, "_title-bar-id_", "secondary-title-bar");
+    titleBar = titleBar.replace("_title-bar-id_", "secondary-title-bar");
   }
 
   return titleBar;
@@ -89,7 +81,7 @@ function assembleTitleBar(request){
 // Creates and returns the html content for the file list page
 function assembleFileListPage(requestPath){
   var page = fs.readFileSync("./public/file-list.html");  //page to be returned
-  page = strReplace(page.toString(), "_user_", requestPath.substring(7));
+  page = page.toString().replace("_user_", requestPath.substring(7));
 
   var numFiles = 0;
   var fileListString = "";
@@ -106,10 +98,10 @@ function assembleFileListPage(requestPath){
   }
 
   if(numFiles>=1){
-    page = strReplace(page.toString(), "_file-list_", fileListString);
+    page = page.toString().replace("_file-list_", fileListString);
   }
   else{
-    page = strReplace(page.toString(), "_file-list_", "<p>No files exist for this user</p>");
+    page = page.toString().replace("_file-list_", "<p>No files exist for this user</p>");
   }
   return page;
 }
@@ -222,17 +214,15 @@ function serverPostMethod(req, res){
       if(err){
         res.statusCode = 500
         res.statusMessage = "Could not create new file";
-        res.end();
-        fs.closeSync(fd);
       }
       else{
         fs.write(fd, JSON.stringify(fileContent, null, "\n"), function (){});
         res.statusCode = 201;
         res.statusMessage = "Successfully posted";
         res.setHeader("Location", filePath);
-        res.end();
-        fs.closeSync(fd);
       }
+      res.end();
+      fs.closeSync(fd);
     });
   })
 }

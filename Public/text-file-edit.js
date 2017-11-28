@@ -47,10 +47,35 @@ function toggleTagOnSelection(tag){
       newClientText += "<"+tag+">"+selectedText.toString()+"</"+tag+">";
       newClientText += clientText.substring(selectedText.focusOffset);
     }
-    //text is partially bold
-    //text is fully bold
+    else{
+      //partial
+      if(false){}
+      else{   //full
+        if(clientText.substring(selectedText.anchorOffset-(tag.length+3), selectedText.anchorOffset)==='<'+tag+'>'){
+          newClientText = clientText.substring(0, selectedText.anchorOffset-(tag.length+2));
+          newClientText += selectedText.toString();
+        }
+        else{   //tag does not start immediatly before the selected text
+          newClientText = clientText.substring(0, selectedText.anchorOffset);
+          newClientText += "</"+tag+">"+selectedText;
+        }
+
+        if(clientText.substring(selectedText.focusOffset, selectedText.focusOffset+(tag.length+3))==='</'+tag+'>'){
+          newClientText += clientText.substring(selectedText.focusOffset+(tag.length+3));
+        }
+        else{   //tag does not end immediatly after the selected text
+          newClientText += clientText.substring(selectedText.focusOffset)+'<'+tag+'>';
+        }
+      }
+    }
     console.log(newClientText);
   }
+}
+
+//Updates the file content client-side
+function updateClientText(newText){
+  document.getElementById('text-content').innerHTML = newText;
+  clientText = newText;
 }
 
 //Saves the document and uses setTimout to trigger the next autosave
