@@ -38,6 +38,10 @@ function toggleUnderline(){
 //Toggle whether the selected text has a certain tag
 function toggleTagOnSelection(tag){
   var selectedText = document.getSelection();
+  var selectionStart = clientText.toString().indexOf(selectedText.toString());
+  var selectionEnd = selectionStart+selectedText.toString().length;
+  console.log("Selection from",selectionStart,"to",selectionEnd);
+
   if(selectedText.anchorNode &&
       isDescendant(document.getElementById('text-content'), selectedText.anchorNode)){
     var hasTag = isInTag(selectedText.anchorNode, tag);
@@ -47,10 +51,22 @@ function toggleTagOnSelection(tag){
       newClientText += "<"+tag+">"+selectedText.toString()+"</"+tag+">";
       newClientText += clientText.substring(selectedText.focusOffset);
     }
-    else{
-      //partial
-      if(false){}
-      else{   //full
+    else{   //text is in given tag
+      if(selectedText.toString().includes('<'+tag+'>') || selectedText.toString().includes('</'+tag+'>')){
+        if(selectedText.toString().includes('<'+tag+'>')){  //text has start of tag in it
+          newClientText = clientText.substring(0, selectedText.anchorOffset);
+          newClientText += '<'+tag+'>';
+          newClientText += selectedText.toString().replace('<'+tag+'>', '');
+          newClientText += clientText.substring(selectedText.focusOffset+1);
+        }
+        if(selectedText.toString().includes('</'+tag+'>')){ //text has end of tag in it
+          newClientText = clientText.substring(0, selectedText.anchorOffset);
+          newClientText += selectedText.toString().replace('</'+tag+'>', '');
+          newClientText += '</'+tag+'>';
+          newClientText += clientText.substring(selectedText.focusOffset)+1;
+        }
+      }
+      else{ //selection does not contain tag
         if(clientText.substring(selectedText.anchorOffset-(tag.length+3), selectedText.anchorOffset)==='<'+tag+'>'){
           newClientText = clientText.substring(0, selectedText.anchorOffset-(tag.length+2));
           newClientText += selectedText.toString();
@@ -68,6 +84,7 @@ function toggleTagOnSelection(tag){
         }
       }
     }
+    updateClientText(newClientText);
     console.log(newClientText);
   }
 }
@@ -78,9 +95,14 @@ function updateClientText(newText){
   clientText = newText;
 }
 
+//Posts the file to the server
+function saveContent(){
+  //
+}
+
 //Saves the document and uses setTimout to trigger the next autosave
 function autoSave(){
-  //send request to server
+  saveContent();
   //setTimout for next autosave
 }
 

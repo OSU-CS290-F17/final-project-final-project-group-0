@@ -22,7 +22,7 @@ function getStatusCode(requestPath){
     }
     else{ //Specific file
       var fileList = fs.readdirSync(path.join(__dirname, pathArray[1], pathArray[2]));
-      if(fileList.includes(pathArray[3])){
+      if(fileList.includes(pathArray[3]+".json")){
         return 200;
       }
       else{
@@ -81,7 +81,7 @@ function assembleTitleBar(request){
 // Creates and returns the html content for the file list page
 function assembleFileListPage(requestPath){
   var page = fs.readFileSync("./public/file-list.html");  //page to be returned
-  page = page.toString().replace("_user_", requestPath.substring(7));
+  page = page.toString().replace("_user_", currentUser);
 
   var numFiles = 0;
   var fileListString = "";
@@ -130,23 +130,35 @@ function assembleSpreadsheetContent(requestPath){
 // Assembles and returns html content for all pages
 function assembleContent(request){
   var content;
-  var fileRegEx = new RegExp("^/files/");
-  if(request.url==="/" || request.url==="/home"){   //Main page
+  var pathArray = request.url.split('/');
+  if(pathArray[1]==="" || pathArray[1]==="home"){   //Main page
     content = fs.readFileSync("./public/main-page.html");
   }
-  else if(fileRegEx.test(request.url)){ //List user's files
-    if(currentUser===request.url.substring(7)){
+  else if(pathArray[1]==="files"){ //List user's files
+    if(currentUser===pathArray[2] && pathArray.length<=3){
       content = assembleFileListPage(request.url);
     }
-    else if(currentUser===request.url.substring(7,request.url.substring(7).indexOf("/")+7)){
-      content = assembleTextFileContent(request.url);
+    else if(currentUser===pathArray[2]){
+      var fileList = fs.readdirSync(path.join(__dirname,pathArray[1],pathArray[2]));
+      if(fileList.includes(pathArray[3]+'.json')){  //Test if requested file exists
+        content = assembleTextFileContent(request.url);
+      }
+      else{ //File does not exist
+        content = fs.readFileSync("./public/error.html").toString();
+        content = content.replace("_error-title_", "404 Error");
+        content = content.replace("_error-message_","The requested file does not exist.");
+      }
     }
-    else{
-      content = "Access denied";
+    else{ //Not allowed access to given file or file list
+      content = fs.readFileSync("./public/error.html").toString();
+      content = content.replace("_error-title_", "Access Denied");
+      content = content.replace("_error-message_","You do not have permission to access the requested page");
     }
   }
   else{   //404 page
-    content = fs.readFileSync("./public/404.html");
+    content = fs.readFileSync("./public/error.html").toString();
+    content = content.replace("_error-title_", "404 Error");
+    content = content.replace("_error-message_","Something went wrong, please try again later.");
   }
   return content;
 }

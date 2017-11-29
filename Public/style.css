@@ -220,10 +220,10 @@ body{
 #new-file-popup{
   display: none;
   position: fixed;
-  top: calc(50vh - 70px);
+  top: calc(50vh - 55px);
   left: calc(50vw - 100px);
 
-  height: 140px;
+  height: 110px;
   width: 200px;
   border-radius: 10px;
 
@@ -238,7 +238,7 @@ body{
 }
 
 #file-name-input{
-  margin-top: 25px;
+  margin-top: 10px;
   width: 200px;
 }
 
@@ -253,13 +253,14 @@ body{
 
 #popup-buttons{
   width: 200px;
-  margin-top: 25px;
+  margin-top: 10px;
   margin-left: 35px;
 }
 
 #popup-buttons span{
   background-color: #8de08d;
   border: 1px solid #8de08d;
+  border-radius: 3px;
 }
 
 #popup-buttons span:hover{
@@ -300,11 +301,11 @@ body{
 }
 
 /*404 Page*/
-#error-404>h1{
+#error-div>h1{
   font-size: 75px;
 }
 
-#error-404{
+#error-div{
   font-size: 30px;
   text-align: center;
   color: #4f4040;
