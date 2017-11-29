@@ -47,45 +47,45 @@ function toggleTagOnSelection(tag){
     var hasTag = isInTag(selectedText.anchorNode, tag);
     var newClientText;
     if(!hasTag){
-      newClientText = clientText.substring(0, selectedText.anchorOffset);
+      newClientText = clientText.substring(0, selectionStart);
       newClientText += "<"+tag+">"+selectedText.toString()+"</"+tag+">";
-      newClientText += clientText.substring(selectedText.focusOffset);
+      newClientText += clientText.substring(selectionEnd);
     }
     else{   //text is in given tag
       if(selectedText.toString().includes('<'+tag+'>') || selectedText.toString().includes('</'+tag+'>')){
         if(selectedText.toString().includes('<'+tag+'>')){  //text has start of tag in it
-          newClientText = clientText.substring(0, selectedText.anchorOffset);
+          newClientText = clientText.substring(0, selectionStart);
           newClientText += '<'+tag+'>';
           newClientText += selectedText.toString().replace('<'+tag+'>', '');
-          newClientText += clientText.substring(selectedText.focusOffset+1);
+          newClientText += clientText.substring(selectionEnd+1);
         }
         if(selectedText.toString().includes('</'+tag+'>')){ //text has end of tag in it
-          newClientText = clientText.substring(0, selectedText.anchorOffset);
+          newClientText = clientText.substring(0, selectionStart);
           newClientText += selectedText.toString().replace('</'+tag+'>', '');
           newClientText += '</'+tag+'>';
-          newClientText += clientText.substring(selectedText.focusOffset)+1;
+          newClientText += clientText.substring(selectionEnd+1);
         }
       }
       else{ //selection does not contain tag
-        if(clientText.substring(selectedText.anchorOffset-(tag.length+3), selectedText.anchorOffset)==='<'+tag+'>'){
-          newClientText = clientText.substring(0, selectedText.anchorOffset-(tag.length+2));
+        if(clientText.substring(selectionStart-(tag.length+2), selectionStart)==='<'+tag+'>'){
+          newClientText = clientText.substring(0, selectionStart-(tag.length+2));
           newClientText += selectedText.toString();
         }
         else{   //tag does not start immediatly before the selected text
-          newClientText = clientText.substring(0, selectedText.anchorOffset);
+          newClientText = clientText.substring(0, selectionStart);
           newClientText += "</"+tag+">"+selectedText;
         }
 
-        if(clientText.substring(selectedText.focusOffset, selectedText.focusOffset+(tag.length+3))==='</'+tag+'>'){
-          newClientText += clientText.substring(selectedText.focusOffset+(tag.length+3));
+        if(clientText.substring(selectionEnd, selectionEnd+(tag.length+4))==='</'+tag+'>'){
+          newClientText += clientText.substring(selectionEnd+(tag.length+3));
         }
         else{   //tag does not end immediatly after the selected text
-          newClientText += clientText.substring(selectedText.focusOffset)+'<'+tag+'>';
+          newClientText += clientText.substring(selectionEnd)+'<'+tag+'>';
         }
       }
     }
-    updateClientText(newClientText);
     console.log(newClientText);
+    updateClientText(newClientText);
   }
 }
 

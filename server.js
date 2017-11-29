@@ -198,44 +198,50 @@ function serverGetMethod(req, res){
 
 // Called on POST requests, sends response back
 function serverPostMethod(req, res){
-  var fileName = [];
+  var fileObject = [];
   req.on('data', (chunk) => {   //collect the data sent
-    fileName.push(chunk);
+    fileObject.push(chunk);
   }).on('end', () => {  //run when data is finished
-    fileName = Buffer.concat(fileName).toString();
-    var filePath = path.join("Files", currentUser, fileName);
-    filePath += ".json";
+    fileObject = JSON.parse(Buffer.concat(fileObject).toString());
+    if(fileObject.type==="newFile"){
+      var filePath = path.join("Files", currentUser, fileObject.fileName);
+      filePath += ".json";
 
-    var currentDate = new Date();
-    var year = currentDate.getFullYear();
-    var month = currentDate.getMonth()+1;
-    var day = currentDate.getDate();
-    if(month<10){
-      month = "0"+month;
-    }
-    if(day<10){
-      day = "0"+day;
-    }
-
-    var fileContent = {
-      "date-created": year+"-"+month+"-"+day,
-      "content": ""
-    }
-
-    fs.open(filePath, "w", function (err, fd){
-      if(err){
-        res.statusCode = 500
-        res.statusMessage = "Could not create new file";
+      var currentDate = new Date();
+      var year = currentDate.getFullYear();
+      var month = currentDate.getMonth()+1;
+      var day = currentDate.getDate();
+      if(month<10){
+        month = "0"+month;
       }
-      else{
-        fs.write(fd, JSON.stringify(fileContent, null, "\n"), function (){});
-        res.statusCode = 201;
-        res.statusMessage = "Successfully posted";
-        res.setHeader("Location", filePath);
+      if(day<10){
+        day = "0"+day;
       }
-      res.end();
-      fs.closeSync(fd);
-    });
+
+      var fileContent = {
+        "date-created": year+"-"+month+"-"+day,
+        "content": ""
+      }
+
+      fs.open(filePath, "w", function (err, fd){
+        if(err){
+          res.statusCode = 500
+          res.statusMessage = "Could not create new file";
+        }
+        else{
+          fs.write(fd, JSON.stringify(fileContent, null, "\n"), function (){});
+          res.statusCode = 201;
+          res.statusMessage = "Successfully posted";
+          res.setHeader("Location", filePath);
+        }
+        res.end();
+        fs.closeSync(fd);
+      });
+    }
+    else if(fileObject.type==="fileContent"){
+      var fileName = req.url.split("/");
+      console.log(fileName);
+    }
   })
 }
 
@@ -269,7 +275,8 @@ function serverCall(req, res){
 }   //main function which responds to server calls
 
 
+var port = process.env.PORT || 2000;
 var server = http.createServer(serverCall);
-server.listen(2000, function (){
-  console.log("==Server started.");
+server.listen(port, function (){
+  console.log("==Server started on port "+port+".");
 });
