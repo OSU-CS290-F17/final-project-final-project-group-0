@@ -98,8 +98,13 @@ function clearNewFilePopup(){
 
 function createNewFile(){
   var fileName = document.getElementById('file-name-input').childNodes[3].value;
+  var fileObject = {
+    "type": "newFile",
+    "fileName": fileName
+  }
   var request = new XMLHttpRequest();
   request.open("POST", window.location.href, true);
+  request.setRequestHeader("Content-Type", "application/json");
   request.onload = function (){
     var fileListBox = document.getElementById('file-list');
     if(fileListBox.getElementsByClassName('file').length <= 0){
@@ -113,7 +118,7 @@ function createNewFile(){
     newFileContainer.appendChild(newFileElement);
     fileListBox.appendChild(newFileContainer);
   };
-  request.send(fileName);
+  request.send(JSON.stringify(fileObject));
   hideNewFilePopup();
   clearNewFilePopup();
 }
@@ -156,7 +161,7 @@ function fileClicked(event){
   }
 }
 
-function deleteSelectedFiles(){ //broken
+function deleteSelectedFiles(){
   document.getElementById('delete-files').style.color = "#b3b3b3";  //grey out 'deleteSelectedFiles' button
   console.log(selectedFiles);
   for(var b=0; b < selectedFiles.length; b++){
