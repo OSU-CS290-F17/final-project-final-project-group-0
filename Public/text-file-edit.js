@@ -42,7 +42,7 @@ function toggleUnderline(){
 }
 
 //Returns the indecies of the selection's start and end in clientText
-function getTrueIndex(){
+function getTrueIndex(){  //broken
   var selection = document.getSelection();
   var fileContent = document.getElementById('text-content');
   if(isDescendant(fileContent, selection.anchorNode)
@@ -63,7 +63,6 @@ function getTrueIndex(){
             offset += clientText.substring(a+1+selection.anchorOffset+b+offset).indexOf('>')+1;
           }
           else if(clientText[a+1+selection.anchorOffset+b+offset]!==selection.toString()[b]){
-            console.log("Check failed at",a+1+selection.anchorOffset+b,":",clientText[a+1+selection.anchorOffset+b],',',selection.toString()[b]);
             foundIndex = false;
             break;
           }
@@ -80,8 +79,6 @@ function getTrueIndex(){
             offset += clientText.substring(a+c).indexOf('>')+1;
           }
           else if(clientText[a+c+offset]!==selection.toString()[c-offset]){
-            console.log("Check failed at",a+c,":",clientText[a+c],",",selection.toString()[c]);
-            foundIndex = false;
             break;
           }
         }
@@ -91,7 +88,6 @@ function getTrueIndex(){
         }
       }
     }
-    console.log("Did not return");
     return null;
   }
   else{
@@ -111,58 +107,61 @@ function toggleTagOnSelection(tag){
   var indexStart = index[0];
   var indexEnd = index[1];
 
-  console.log(hasTag);
   console.log("Selection from",indexStart,"to",indexEnd);
 
   var newClientText = clientText;
-  var newSubstring;
-  var hasTag = isInTag(selection.anchorNode, tag) || isInTag(selection.focusNode, tag);
+  var newSubstring = newClientText.substring(indexStart, indexEnd);
+  var hasTag = isInTag(selection.anchorNode, tag) || isInTag(selection.focusNode, tag) || newSubstring.includes("<"+tag+">");
   if(!hasTag){
     newClientText = strInsert(newClientText, indexEnd, "</"+tag+">");
     newClientText = strInsert(newClientText, indexStart, "<"+tag+">");
   }
   else{
-    newSubstring = newClientText.substring(indexStart, indexEnd);
-    if(!newSubstring.includes("<"+tag+">") && !newSubstring.includes("</"+tag+">")){
-      if(newClientText.substring(indexStart-(2+tag.length),indexStart)==="<"+tag+">"){
-        //
+    if(newClientText.substring(indexStart-(2+tag.length),indexStart)==="<"+tag+">"){  //tag starts at selection
+      console.log("Tag starts at selection");
+      if(newClientText.substring(indexEnd, indexEnd+3+tag.length)==="</"+tag+">"){
+        newClientText = newClientText.substring(0,indexStart-(2+tag.length))+newClientText.substring(indexStart);
+        indexStart -= 2+tag.length;
+        newClientText = newClientText.substring(0,indexStart)+newSubstring+newClientText.substring(indexEnd+1);
+      }
+      else if(newSubstring.includes("</"+tag+">")){
+        newSubstring = newSubstring.replace("</"+tag+">","");
+        newSubstring += "</"+tag+">";
+        newClientText = newClientText.substring(0,indexStart)+newSubstring+newClientText.substring(indexEnd);
       }
       else{
-        //
-      }
-
-      if(newClientText.substring(indexEnd,indexEnd+3+tag.length)==="</"+tag+">"){
-        //
-      }
-      else{
-        //
+        newClientText = newClientText.substring(0,indexStart-(2+tag.length))+newClientText.substring(indexStart);
+        indexStart -= 2+tag.length;
+        indexEnd -= 2+tag.length;
+        newClientText = newClientText.substring(0,indexStart)+newSubstring+"<"+tag+">"+newClientText.substring(indexEnd);
       }
     }
-    else{ //tag partially holds selection
-  //   if(newClientText.substring(indexStart-(2+tag.length),indexStart)==="<"+tag+">"){  //tag starts before selection
-  //     newClientText = newClientText.substring(0, indexStart-(2+tag.length))+newClientText.substring(indexStart);
-  //     indexStart -= 2+tag.length;
-  //     indexEnd -= 2+tag.length;
-  //   }
-  //   else{ //tag starts in or far before selection
-  //     if(newSubstring.includes("<"+tag+">")){ //tag starts in selection
-  //       newSubstring = newSubstring.replace("<"+tag+">", "");
-  //       newSubstring = "<"+tag+">"+newSubstring;
-  //     }
-  //   }
-  //
-  //   if(newClientText.substring(indexEnd,indexEnd+3+tag.length)==="</"+tag+">"){
-  //     newClientText = newClientText.substring(0,indexEnd)+newClientText.substring(indexEnd+3+tag.length);
-  //   }
-  //   else{ //tag ends in or far after selection
-  //     if(newClientText.includes("</"+tag+">")){ //tag ends in selection
-  //       newSubstring = newSubstring.replace("</"+tag+">", "");
-  //       newSubstring = newSubstring+"</"+tag+">";
-  //     }
-  //     else{ //tag ends far after selection
-  //       newSubstring = newSubstring+"<"+tag+">";
-  //     }
-  //   }
+    else if(newSubstring.includes("<"+tag+">")){  //tag starts in selection
+      console.log("Tag starts in selection");
+      newSubstring = newSubstring.replace("<"+tag+">","");
+      if(newSubstring.includes("</"+tag+">")){
+        newSubstring = newSubstring.replace("</"+tag+">","");
+        newClientText = newClientText.substring(0,indexStart)+"<"+tag+">"+newSubstring+"</"+tag+">"+newClientText.substring(indexEnd);
+      }
+      else if(newClientText.substring(indexEnd, indexEnd+3+tag.length)==="</"+tag+">"){
+        newClientText = newClientText.substring(0,indexStart)+"<"+tag+">"+newSubstring+newClientText.substring(indexEnd-(3+tag.length));//broken
+      }
+      else{
+        newClientText = newClientText.substring(0,indexStart)+"<"+tag+">"+newSubstring+newClientText.substring(indexEnd);
+      }
+    }
+    else{ //tag starts before selection
+      console.log("Tag starts before selection");
+      if(newClientText.substring(indexEnd, indexEnd+3+tag.length)==="</"+tag+">"){
+        newClientText = newClientText.substring(0,indexStart)+"</"+tag+">"+newSubstring+newClientText.substring(indexEnd-(3+tag.length));//broken
+      }
+      else if(newSubstring.includes("</"+tag+">")){
+        newSubstring = newSubstring.replace("</"+tag+">","");
+        newClientText = newClientText.substring(0,indexStart)+newSubstring+"</"+tag+">"+newClientText.substring(indexEnd);
+      }
+      else{
+        newClientText = newClientText.substring(0,indexStart)+"</"+tag+">"+newSubstring+"<"+tag+">"+newClientText.substring(indexEnd);
+      }
     }
   }
   updateClientText(newClientText);
