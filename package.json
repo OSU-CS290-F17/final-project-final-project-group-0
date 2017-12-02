@@ -1,0 +1,26 @@
+{
+  "name": "final_project",
+  "version": "1.0.0",
+  "description": "Hosts a site which allows for in-browser editing of remote files",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OSU-CS290-F17/final-project-final-project-group-0.git"
+  },
+  "keywords": [
+    "Final"
+  ],
+  "author": "Owen Haggerty",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/OSU-CS290-F17/final-project-final-project-group-0/issues"
+  },
+  "homepage": "https://github.com/OSU-CS290-F17/final-project-final-project-group-0#readme",
+  "dependencies": {
+    "mongodb": "^2.2.33"
+  }
+}
