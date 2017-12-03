@@ -1,14 +1,18 @@
-<!DOCTYPE html>
-<script src="/public/file-list.js" charset="utf-8" defer></script>
+{{> title}}
+<script src="file-list.js" charset="utf-8" defer></script>
 <div class="content">
-  <h2>_user_'s Files</h2>
+  <h2>{{user}}'s Files</h2>
   <div id="file-options">
     <span id="new-file">New File</span>
     <span id="delete-files">Delete Selected Files</span>
     <span id="select-files">Select Files</span>
   </div>
   <div id="file-list">
-    _file-list_
+    {{#each files}}
+      {{> file file=this}}
+      {{else}}
+        <p>No files exist for this user</p>
+    {{/each}}
   </div>
   <div id="popup-background">
     <div id="new-file-popup">
