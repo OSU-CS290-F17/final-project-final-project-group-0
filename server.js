@@ -9,6 +9,7 @@ var fileListScript = fs.readFileSync("./public/file-list.js").toString();
 var textFileEditScript = fs.readFileSync("./public/text-file-edit.js").toString();
 
 var currentUser = "Alice";
+var db;
 
 
 // Returns a number representing the status code to be sent to the client for GET request
@@ -87,24 +88,29 @@ function assembleFileListPage(requestPath){
   var numFiles = 0;
   var fileListString = "";
 
-  var fileList = fs.readdirSync("."+requestPath);
+  var fileList;
+  db.collection(currentUser).find({}).toArray(function (err, data){
+    fileList = data;
+    // console.log(data);
+  });
   var currentFileName = "";
-  for(var c=0; c < fileList.length; c++){
-    if(fileList[c].toString().includes(".json")){
-      numFiles++;
-      currentFileName = fileList[c].toString().substring(0, fileList[c].toString().length-5);
-      fileListString += '<p class="file"><a href="'+requestPath+'/'+currentFileName+'">';
-      fileListString += currentFileName+'</a></p>';
-    }
-  }
-
-  if(numFiles>=1){
-    page = page.toString().replace("_file-list_", fileListString);
-  }
-  else{
-    page = page.toString().replace("_file-list_", "<p>No files exist for this user</p>");
-  }
-  return page;
+  return "WIP";
+  // for(var c=0; c < fileList.length; c++){
+  //   if(fileList[c].toString().includes(".json")){
+  //     numFiles++;
+  //     currentFileName = fileList[c].toString().substring(0, fileList[c].toString().length-5);
+  //     fileListString += '<p class="file"><a href="'+requestPath+'/'+currentFileName+'">';
+  //     fileListString += currentFileName+'</a></p>';
+  //   }
+  // }
+  //
+  // if(numFiles>=1){
+  //   page = page.toString().replace("_file-list_", fileListString);
+  // }
+  // else{
+  //   page = page.toString().replace("_file-list_", "<p>No files exist for this user</p>");
+  // }
+  // return page;
 }
 
 
@@ -247,6 +253,8 @@ function serverPostMethod(req, res){
       var fileName = req.url.split("/");
       fileName = fileName[fileName.length-1]; //get last element
       console.log("Updating",fileName);
+      res.statusCode = 204;
+      res.end();
     }
   })
 }
@@ -281,8 +289,23 @@ function serverCall(req, res){
 }
 
 
+var mongoUser = process.env.MONGO_USER;
+var mongoPassword = process.env.MONGO_PSWRD;
+var mongoHost = process.env.MONGO_HOST;
+var mongoDatabase = process.env.MONGO_DB_NAME;
+var mongoPort = process.env.MONGO_PORT || 27017;
+var mongoURL = 'mongodb://'+mongoUser+':'+mongoPassword+'@'+mongoHost+':'+mongoPort+'/'+mongoDatabase;
+
 var port = process.env.PORT || 2000;
 var server = http.createServer(serverCall);
-server.listen(port, function (){
-  console.log("==Server started on port "+port+".");
+
+mongoClient.connect(mongoURL, function (err, connection){
+  if(err){
+    throw(err);
+  }
+  db = connection;
+  console.log("==MongoDB connection established.");
+  server.listen(port, function (){
+    console.log("==Server started on port "+port+".");
+  });
 });

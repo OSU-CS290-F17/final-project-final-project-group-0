@@ -103,7 +103,7 @@ function createNewFile(){
     "fileName": fileName
   }
   var request = new XMLHttpRequest();
-  request.open("POST", window.location.href, true);
+  request.open("POST", window.location.href);
   request.setRequestHeader("Content-Type", "application/json");
   request.onload = function (){
     if(request.status>=200 && request.status<=299){

@@ -1,7 +1,7 @@
 var clientText = document.getElementById('text-content').innerHTML;
 var caret = 3;
 var isSaved = true;
-var autoSaveTimer = setTimout(0, null);
+var autoSaveTimer;
 
 var invalidCharacters = ["<",">"];
 var overriddenCharacters = [" "];  //characters to override default behavior on
@@ -239,18 +239,33 @@ function keyPressed(event){
 // Displays or hides the save options popup
 function toggleSaveOptions(){
   var saveOptionsPopup = document.getElementById('save-options-popup');
-  if(saveOptionsPopup.style.display==="none"){
-    saveOptionsPopup.style.display = "inherit";
+  if(saveOptionsPopup.style.display==="inherit"){
+    saveOptionsPopup.style.display = "none";
   }
   else{
-    saveOptionsPopup.style.display = "none";
+    saveOptionsPopup.style.display = "inherit";
   }
 }
 
 //Posts the file to the server
 function saveContent(){
-  //
-  isSaved = true;
+  var contentObject = {
+    "type":"fileContent",
+    "textContent":clientText,
+    "font":document.getElementById('font-selection').value
+  }
+  var request = new XMLHttpRequest();
+  request.open("POST", window.location.href);
+  request.setRequestHeader("Content-Type", "application/json");
+  request.onload = function (){
+    if(request.status>=200 && request.status<300){
+      isSaved = true;
+    }
+    else{
+      alert("Failed to save, please try again")
+    }
+  }
+  request.send(JSON.stringify(contentObject));
 }
 
 //Saves the document and uses setTimout to trigger the next autosave
@@ -268,6 +283,9 @@ toggleUnderlineButton.addEventListener('mousedown', toggleUnderline);
 
 var saveOptionsButton = document.getElementById('save-options-button');
 saveOptionsButton.addEventListener("click", toggleSaveOptions);
+
+var saveFileButton = document.getElementById('save-button');
+saveFileButton.addEventListener("click", saveContent);
 
 var fontSelectionMenu = document.getElementById('font-selection');
 fontSelectionMenu.addEventListener("change", updateFontStyle);
