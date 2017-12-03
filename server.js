@@ -85,8 +85,7 @@ app.get("/files/:user", function (req, res, next){
   }
 });
 
-app.get("files/:user/:file", function (req, res, next){
-  console.log("Got file call");
+app.get("/files/:user/:file", function (req, res, next){
   if(req.params.user===currentUser){
     db.collection(currentUser, function(err, col){
       if(err){
@@ -107,17 +106,15 @@ app.get("files/:user/:file", function (req, res, next){
               }
               else{
                 var userFile = fileArray[0];
-                console.log(userFile.content);
                 dataObject = {
                   content: userFile.content,
                   font: userFile.font,
                   title_bar_id: "secondary-title-bar",
-                  page_title: "File",
+                  page_title: req.params.file,
                   user: currentUser,
                   login: "Logout"
                 };
-                next();
-                // res.status(200).render('edit-file', dataObject);
+                res.status(200).render('edit-file', dataObject);
               }
             });
           }
@@ -140,7 +137,6 @@ app.get("files/:user/:file", function (req, res, next){
 
 // 404 page
 app.get("*", function (req, res, next){
-  console.log(req.originalUrl);
   var dataObject = {
     page_title: "404 Error",
     title_bar_id: "secondary-title-bar",
