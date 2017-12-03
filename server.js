@@ -18,7 +18,6 @@ app.engine('handlebars', handlebars({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 
 app.use(express.static(path.join(__dirname,"Public")));
-app.use("/files", express.static(path.join(__dirname,"Public")));
 
 
 //Home page
@@ -31,21 +30,47 @@ function homePage(req, res, next){
   }
   res.status(200).render('home', dataObject);
 }
-
 app.get("/", homePage);
 app.get("/home", homePage);
 
+//File list page
 app.get("/files/:user", function (req, res, next){
-  if(req.user===currentUser){
+  if(req.params.user===currentUser){
     var dataObject = {
       title_bar_id: "secondary-title-bar",
       page_title: currentUser+"'s Files",
       user: currentUser,
       login: "Logout",
-      path: req.path,
-      files: ["File1", "File2"]
+      path: req.path
     }
-    res.status(200).render('file-list', dataObject);
+    db.collection(currentUser, function (err, col){
+      if(err){
+        res.status(500).send("Server error when accessing database");
+      }
+      else{
+        col.find({}, function (err, fileCursor){
+          if(err){
+            res.status(500).send("Server error when accessing database");
+          }
+          else{
+            fileCursor.toArray(function (err, files){
+              // console.log(files);
+              if(err){
+                res.status(500).send("Server error when accessing database");
+              }
+              else{
+                var fileNames = [];
+                for(var a=0; a<files.length; a++){
+                  fileNames[a] = files[a].name;
+                }
+                dataObject.files = fileNames;
+                res.status(200).render('file-list', dataObject);
+              }
+            });
+          }
+        });
+      }
+    });
   }
   else{
     var dataObject = {
@@ -60,7 +85,62 @@ app.get("/files/:user", function (req, res, next){
   }
 });
 
+app.get("files/:user/:file", function (req, res, next){
+  console.log("Got file call");
+  if(req.params.user===currentUser){
+    db.collection(currentUser, function(err, col){
+      if(err){
+        res.status(500).send("Server error when accessing database");
+      }
+      else{
+        col.find({name:req.params.file}, function (err, cursor){
+          if(err){
+            res.status(500).send("Server error when accessing database");
+          }
+          else{
+            cursor.toArray(function (err, fileArray){
+              if(err){
+                res.status(500).send("Server error when accessing database");
+              }
+              else if(fileArray.length===0){
+                next(); //404 error
+              }
+              else{
+                var userFile = fileArray[0];
+                console.log(userFile.content);
+                dataObject = {
+                  content: userFile.content,
+                  font: userFile.font,
+                  title_bar_id: "secondary-title-bar",
+                  page_title: "File",
+                  user: currentUser,
+                  login: "Logout"
+                };
+                next();
+                // res.status(200).render('edit-file', dataObject);
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+  else{
+    var dataObject = {
+      page_title: "Access Denied",
+      title_bar_id: "secondary-title-bar",
+      user: currentUser,
+      login: "Logout",
+      error_title: "Access Denied",
+      error_message: "You do not have permission to access the requested page"
+    }
+    res.status(403).render('error', dataObject);
+  }
+});
+
+// 404 page
 app.get("*", function (req, res, next){
+  console.log(req.originalUrl);
   var dataObject = {
     page_title: "404 Error",
     title_bar_id: "secondary-title-bar",
@@ -73,40 +153,99 @@ app.get("*", function (req, res, next){
 })
 
 
-// // Creates and returns the html content for the file list page
-// function assembleFileListPage(requestPath){
-//   var page = fs.readFileSync("./public/file-list.html");  //page to be returned
-//   page = page.toString().replace("_user_", currentUser);
-//
-//   var numFiles = 0;
-//   var fileListString = "";
-//
-//   var fileList;
-//   db.collection(currentUser).find({}).toArray(function (err, data){
-//     fileList = data;
-//     // console.log(data);
-//   });
-//   var currentFileName = "";
-//   return "WIP";
-//   // for(var c=0; c < fileList.length; c++){
-//   //   if(fileList[c].toString().includes(".json")){
-//   //     numFiles++;
-//   //     currentFileName = fileList[c].toString().substring(0, fileList[c].toString().length-5);
-//   //     fileListString += '<p class="file"><a href="'+requestPath+'/'+currentFileName+'">';
-//   //     fileListString += currentFileName+'</a></p>';
-//   //   }
-//   // }
-//   //
-//   // if(numFiles>=1){
-//   //   page = page.toString().replace("_file-list_", fileListString);
-//   // }
-//   // else{
-//   //   page = page.toString().replace("_file-list_", "<p>No files exist for this user</p>");
-//   // }
-//   // return page;
-// }
-//
-//
+app.post("/files/:user", function (req, res, next){
+  if(req.params.user===currentUser){
+    var fileObject = [];
+    req.on('data', function (chunk){
+      fileObject.push(chunk);
+    }).on('end', function (){
+      fileObject = JSON.parse(Buffer.concat(fileObject).toString());
+      if(fileObject.type==="newFile"){
+        var fileName = fileObject.fileName;
+        db.collection(req.params.user, function (err, col){
+          if(err){
+            res.status(500).send("Server error when accessing database");
+          }
+          else{
+            col.find({name:fileName}, function(err, fileObject){
+              if(err){
+                res.status(500).send("Server error when accessing database");
+              }
+              else{
+                fileObject.toArray(function (err, files){
+                  if(files.length===0){
+                    filePath = req.originalUrl+'/'+fileName;
+                    dbFileObject = {
+                      name: fileName,
+                      dateCreated: new Date().toString(),
+                      content: "<p>",
+                      font: "sans-serif-font"
+                    };
+                    col.insertOne(dbFileObject, function (err, result){
+                      if(err){
+                        res.status(500).send("Server error when accessing database");
+                      }
+                      else{
+                        res.status(201).set("Location",filePath).send("");
+                      }
+                    });
+                  }
+                  else{
+                    res.sendStatus(409);
+                  }
+                });
+              }
+            });
+          }
+        });
+      }
+      else if(fileObject.type==="fileContent"){
+        var currentFile = req.path.split("/")[-1];
+        console.log(currentFile);
+      }
+    });
+  }
+  else{
+    var dataObject = {
+      page_title: "Access Denied",
+      title_bar_id: "secondary-title-bar",
+      user: currentUser,
+      login: "Logout",
+      error_title: "Access Denied",
+      error_message: "You do not have permission to access the requested page"
+    }
+    res.status(403).render('error', dataObject);
+  }
+});
+
+app.delete("/files/:user", function (req, res, next){
+  if(req.params.user===currentUser){
+    db.collection(currentUser, function (err, col){
+      if(err){
+        res.status(500).send("Server error when accessing database");
+      }
+      else{
+        var reqBody = [];
+        req.on('data', function (chunk){
+          reqBody.push(chunk);
+        }).on('end', function (){
+          reqBody = Buffer.concat(reqBody).toString();
+          col.deleteOne({name:reqBody}, function (err, result){
+            if(err){
+              res.status(500).send("Server error when accessing database");
+            }
+            else{
+              res.status(204).end();
+            }
+          });
+        });
+      }
+    })
+  }
+  else{
+    res.status(403).send("File with that name already exists");
+  }
+});
 // // Creates and returns the html content for a text editing page
 // function assembleTextFileContent(requestPath){
 //   var user = requestPath.substring(7);
@@ -157,39 +296,6 @@ app.get("*", function (req, res, next){
 //   }
 //   return content;
 // }
-//
-//
-// // Called on GET requests, sends response body
-// function serverGetMethod(req, res){
-//   res.statusCode = getStatusCode(req.url);
-//   if(req.url==="/public/style.css"){  //handle css requests
-//     res.setHeader("Content-Type", "text/css");
-//     res.write(stylesheet);
-//   }
-//   else if(/js$/.test(req.url)){   //handle JS requests
-//     res.setHeader("Content-Type", "text/js");
-//     if(/title.js/.test(req.url)){
-//       res.write(titleScript);
-//     }
-//     else if(/file-list.js/.test(req.url)){
-//       res.write(fileListScript);
-//     }
-//     else if(/text-file-edit.js/.test(req.url)){
-//       res.write(textFileEditScript);
-//     }
-//   }
-//   else{   //handle HTML requests
-//     res.setHeader("Content-Type", "text/html");
-//     res.write("<html>\n");
-//     res.write(assembleHeader(req.url));
-//     res.write("\n<body>");
-//     res.write(assembleTitleBar(req));
-//     res.write(assembleContent(req));
-//     res.write("\n</body>\n</html>");
-//   }
-//   res.end();
-// }
-//
 //
 // // Called on POST requests, sends response back
 // function serverPostMethod(req, res){

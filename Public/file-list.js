@@ -116,12 +116,17 @@ function createNewFile(){
       newFileContainer.classList.add("file");
       newFileElement = document.createElement('a');
       newFileElement.textContent = fileName;
-      newFileElement.href = window.location.href+'/'+fileName;
+      newFileElement.href = window.location.href+fileName;
       newFileContainer.appendChild(newFileElement);
       fileListBox.appendChild(newFileContainer);
     }
     else{
-      alert("Error: "+this.statusText);
+      if(this.statusText==="Conflict"){
+        alert("Error: File with that name already exists")
+      }
+      else{
+        alert("Error: "+this.statusText);
+      }
     }
   };
   request.send(JSON.stringify(fileObject));
