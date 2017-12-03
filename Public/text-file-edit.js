@@ -1,13 +1,25 @@
 var clientText = document.getElementById('text-content').innerHTML;
+var caret = 3;
+var isSaved = true;
+var autoSaveTimer = setTimout(0, null);
+
+var invalidCharacters = ["<",">"];
+var overriddenCharacters = [" "];  //characters to override default behavior on
 
 //Inserts substring into string at index
 function strInsert(string, index, substring){
+  if(index<=0){
+    return substring+string;
+  }
   return string.substring(0,index) + substring + string.substring(index);
 }
 
 //Checks if a node is a descendant of another node
 //Function based on code by stackoverflow user 'Asaph'
 function isDescendant(parent, child){
+  if(!parent || !child){
+    return false;
+  }
   var currentNode = child.parentNode;
   while(currentNode != null){
     if(currentNode == parent){
@@ -34,11 +46,13 @@ function isInTag(node, tag){
 // Toggle bold on selected text
 function toggleBold(){
   toggleTagOnSelection('b');
+  isSaved = false;
 }
 
 //Toggle underlining on selected text
 function toggleUnderline(){
   toggleTagOnSelection('u');
+  isSaved = false;
 }
 
 //Returns the indecies of the selection's start and end in clientText
@@ -167,21 +181,76 @@ function toggleTagOnSelection(tag){
   updateClientText(newClientText);
 }
 
+//Gets the value of 'font-select' and updates the content's class
+function updateFontStyle(){
+  var content = document.getElementById('text-content');
+  var selectedFont = document.getElementById('font-selection').value;
+  if(!content.classList.contains(selectedFont)){
+    for(var currentClass=0; currentClass<content.classList.length; currentClass++){
+      // console.log(content.classList[currentClass]);
+      if(content.classList[currentClass].toString().includes('-font')){
+        content.classList.remove(content.classList[currentClass]);  //remove existing font
+        break;
+      }
+    }
+    content.classList.add(selectedFont);
+  }
+}
+
 //Updates the file content client-side
 function updateClientText(newText){
-  // document.getElementById('text-content').textContent = newText;
-  // clientText = newText;
-  console.log(newText);
+  document.getElementById('text-content').innerHTML = newText;
+  clientText = newText;
+  // console.log(newText);
 }
 
 //Types the file content
 function keyPressed(event){
-  console.log(event);
+  if(!invalidCharacters.includes(event.key) && event.key.length===1){ //Key is allowed
+    if(overriddenCharacters.includes(event.key)){
+      event.preventDefault();
+    }
+    var newText = strInsert(clientText, caret, event.key);
+    caret++;
+    updateClientText(newText);
+    isSaved = false;
+  }
+  else if(event.key==="Backspace"){ //delete characters
+    event.preventDefault();
+    if(caret>3){
+      var newText = clientText.substring(0,caret-1)+clientText.substring(caret);
+      caret--;
+      updateClientText(newText);
+    }
+  }
+  else if(event.key==="Enter"){
+    var newText = strInsert(clientText,caret,"</p><p>");
+    caret += 7;
+    updateClientText(newText);
+  }
+  else if(event.key==="ArrowLeft"){
+    event.preventDefault();
+  }
+  else if(event.key==="ArrowRight"){
+    event.preventDefault();
+  }
+}
+
+// Displays or hides the save options popup
+function toggleSaveOptions(){
+  var saveOptionsPopup = document.getElementById('save-options-popup');
+  if(saveOptionsPopup.style.display==="none"){
+    saveOptionsPopup.style.display = "inherit";
+  }
+  else{
+    saveOptionsPopup.style.display = "none";
+  }
 }
 
 //Posts the file to the server
 function saveContent(){
   //
+  isSaved = true;
 }
 
 //Saves the document and uses setTimout to trigger the next autosave
@@ -197,5 +266,18 @@ toggleBoldButton.addEventListener('mousedown', toggleBold);
 var toggleUnderlineButton = document.getElementById('underline-button');
 toggleUnderlineButton.addEventListener('mousedown', toggleUnderline);
 
-var contentWindow = document.getElementById("text-content");
-contentWindow.addEventListener("keydown", keyPressed);
+var saveOptionsButton = document.getElementById('save-options-button');
+saveOptionsButton.addEventListener("click", toggleSaveOptions);
+
+var fontSelectionMenu = document.getElementById('font-selection');
+fontSelectionMenu.addEventListener("change", updateFontStyle);
+
+document.addEventListener("keypress", keyPressed);
+
+document.getElementById('text-content').focus();
+
+window.onbeforeunload = function(){
+  if(!isSaved){
+    return "Make sure you have saved your work"
+  }
+};

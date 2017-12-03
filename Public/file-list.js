@@ -106,17 +106,23 @@ function createNewFile(){
   request.open("POST", window.location.href, true);
   request.setRequestHeader("Content-Type", "application/json");
   request.onload = function (){
-    var fileListBox = document.getElementById('file-list');
-    if(fileListBox.getElementsByClassName('file').length <= 0){
-      fileListBox.removeChild(fileListBox.childNodes[1]);
+    if(request.status>=200 && request.status<=299){
+      var fileListBox = document.getElementById('file-list');
+      console.log(fileListBox.getElementsByClassName('file'));
+      if(fileListBox.getElementsByClassName('file').length <= 0){
+        fileListBox.removeChild(fileListBox.childNodes[1]); //remove 'no files exist' message
+      }
+      newFileContainer = document.createElement('p');
+      newFileContainer.classList.add("file");
+      newFileElement = document.createElement('a');
+      newFileElement.textContent = fileName;
+      newFileElement.href = window.location.href+'/'+fileName;
+      newFileContainer.appendChild(newFileElement);
+      fileListBox.appendChild(newFileContainer);
     }
-    newFileContainer = document.createElement('p');
-    newFileContainer.classList += "file";
-    newFileElement = document.createElement('a');
-    newFileElement.textContent = fileName;
-    newFileElement.href = window.location.href+'/'+fileName;
-    newFileContainer.appendChild(newFileElement);
-    fileListBox.appendChild(newFileContainer);
+    else{
+      alert("Error: "+this.statusText);
+    }
   };
   request.send(JSON.stringify(fileObject));
   hideNewFilePopup();
@@ -161,32 +167,38 @@ function fileClicked(event){
   }
 }
 
+function deleteFile(fileName){
+  var request = new XMLHttpRequest();
+  request.open("DELETE", window.location.href, true);
+  request.onload = function (){
+    if(request.status>=200 && request.status<=299){ //delete was successful
+      var fileListBox = document.getElementById('file-list');
+      fileList = fileListBox.getElementsByClassName('file');
+      for(var c=0; c<fileList.length; c++){ //remove file client-side
+        if(fileList[c].childNodes[0].textContent===fileName){
+          fileListBox.removeChild(fileList[c]);
+          break;
+        }
+      }
+      if(fileListBox.getElementsByTagName('p').length <= 0){  //no files remain
+        var noFilesNotification = document.createElement('p');
+        noFilesNotification.textContent = "No files exist for this user";
+        document.getElementById('file-list').appendChild(noFilesNotification);
+      }
+    }
+    else{   //delete request failed
+      alert("Something went wrong with the request, please try again.");
+    }
+  }
+  request.send(fileName);
+}
+
 function deleteSelectedFiles(){
   document.getElementById('delete-files').style.color = "#b3b3b3";  //grey out 'deleteSelectedFiles' button
-  console.log(selectedFiles);
   for(var b=0; b < selectedFiles.length; b++){
-    console.log(selectedFiles);
-    var request = new XMLHttpRequest();
-    request.open("DELETE", window.location.href, true);
-    request.onload = function (){
-      if(request.status>=200 && request.status<=299){ //if delete was successful
-        var fileListBox = document.getElementById('file-list');
-        for(var c=0; c < selectedFiles.length; c++){  //remove file client-side
-          fileListBox.removeChild(selectedFiles[c].parentNode);
-        }
-        if(fileListBox.getElementsByTagName('p').length <= 0){
-          var noFilesNotification = document.createElement('p');
-          noFilesNotification.textContent = "No files exist for this user";
-          document.getElementById('file-list').appendChild(noFilesNotification);
-        }
-      }
-      else{   //delete request failed
-        alert("Something went wrong with the request, please try again.");
-      }
-      selectFiles();
-    };
-    request.send(selectedFiles[b].textContent);
+    deleteFile(selectedFiles[b].textContent);
   }
+  selectFiles();
 }
 
 

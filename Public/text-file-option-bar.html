@@ -3,5 +3,30 @@
 <div id="text-file-option-bar">
   <span id="bold-button" class="button">Bold</span>
   <span id="underline-button" class="button">Underline</span>
-  <span id="display-options" class="button">Display</span>
+  <!-- <span id="display-options" class="button">Display</span> -->
+  <span id="font-selection-span">
+    <label for="font-selection">Font Type</label>
+    <select id="font-selection" name="font-selection">
+      <option value="cursive-font">Cursive</option>
+      <option value="fantasy-font">Fantasy</option>
+      <option value="monospace-font">Monospace</option>
+      <option selected value="sans-serif-font">Sans Serif</option>
+      <option value="serif-font">Serif</option>
+    </select>
+  </span>
+  <span id="save-options-button" class="button">Save Options</span>
+</div>
+<div id="save-options-popup">
+  <span id="save-button" class="button">Save File</span>
+  <span id="autosave-span">
+    <label for="autosave-selection">Autosave</label>
+    <select id="autosave-selection" name="autosave-selection">
+      <option value="0">Off</option>
+      <option value="5">Every 5 mins</option>
+      <option value="15">Every 15 mins</option>
+      <option value="30">Every 30 mins</option>
+      <option value="60">Every hour</option>
+    </select>
+  </span>
+  <!--  -->
 </div>

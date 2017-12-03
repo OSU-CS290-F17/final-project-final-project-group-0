@@ -26,6 +26,27 @@ body{
   cursor: pointer;
 }
 
+/*Font classes*/
+.serif-font{
+  font-family: serif;
+}
+
+.sans-serif-font{
+  font-family: sans-serif;
+}
+
+.monospace-font{
+  font-family: monospace;
+}
+
+.cursive-font{
+  font-family: cursive;
+}
+
+.fantasy-font{
+  font-family: fantasy;
+}
+
 /*Main title bar*/
 #main-title-bar{
   height: 120px;
@@ -281,6 +302,10 @@ body{
   background-color: white;
 }
 
+#text-content p{
+  margin: 0px;
+}
+
 #text-file-option-bar{
   margin-top: 20px;
   padding-top: 5px;
@@ -300,7 +325,43 @@ body{
   margin-left: 20px;
 }
 
-/*404 Page*/
+#text-file-option-bar select{
+  position: relative;
+  top: 1px;
+
+  height: 20px;
+  font-size: 15px;
+
+  border: 1px dashed black;
+
+  color: white;
+  background-color: #6060f0;
+}
+
+/*Save options popup*/
+#save-options-popup{
+  display: none;
+  position: absolute;
+  top: 111px;
+  left: calc(10vw + 425px);
+
+  width: 300px;
+  height: 30px;
+
+  border: 1px solid black;
+  border-radius: 5px;
+
+  background-color: #7dd07d;
+  color: white;
+}
+
+#save-options-popup span{
+  position: relative;
+  top: 5px;
+  margin-left: 20px;
+}
+
+/*Error pages*/
 #error-div>h1{
   font-size: 75px;
 }

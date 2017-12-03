@@ -1,6 +1,7 @@
 var http = require("http");
 var fs = require("fs");
 var path = require("path");
+var mongoClient = require("mongodb").MongoClient;
 
 var stylesheet = fs.readFileSync("./public/style.css").toString();
 var titleScript = fs.readFileSync("./public/title.js").toString();
@@ -10,7 +11,7 @@ var textFileEditScript = fs.readFileSync("./public/text-file-edit.js").toString(
 var currentUser = "Alice";
 
 
-// Returns a number representing the status code to be sent to the client
+// Returns a number representing the status code to be sent to the client for GET request
 function getStatusCode(requestPath){
   var pathArray = requestPath.split('/');
   if(pathArray.length===1 || pathArray[1]==="home" || pathArray.includes("public")){
@@ -122,11 +123,6 @@ function assembleTextFileContent(requestPath){
 }
 
 
-function assembleSpreadsheetContent(requestPath){
-  //
-}
-
-
 // Assembles and returns html content for all pages
 function assembleContent(request){
   var content;
@@ -204,43 +200,53 @@ function serverPostMethod(req, res){
   }).on('end', () => {  //run when data is finished
     fileObject = JSON.parse(Buffer.concat(fileObject).toString());
     if(fileObject.type==="newFile"){
-      var filePath = path.join("Files", currentUser, fileObject.fileName);
-      filePath += ".json";
-
-      var currentDate = new Date();
-      var year = currentDate.getFullYear();
-      var month = currentDate.getMonth()+1;
-      var day = currentDate.getDate();
-      if(month<10){
-        month = "0"+month;
+      var fileList = fs.readdirSync(path.join(__dirname,"Files",currentUser));
+      var filePath = path.join("Files", currentUser, fileObject.fileName+".json");
+      if(fileList.includes(fileObject.fileName+".json")){ //File already exists
+        res.statusCode = 409;
+        res.statusMessage = "File cannot be created; file with that name exists";
+        res.setHeader("Location", filePath);
+        res.setHeader("Content-Type", "text/plain");
+        res.write("File cannot be created; file with that name exists");
+        res.end()
       }
-      if(day<10){
-        day = "0"+day;
-      }
-
-      var fileContent = {
-        "date-created": year+"-"+month+"-"+day,
-        "content": ""
-      }
-
-      fs.open(filePath, "w", function (err, fd){
-        if(err){
-          res.statusCode = 500
-          res.statusMessage = "Could not create new file";
+      else{
+        var currentDate = new Date();
+        var year = currentDate.getFullYear();
+        var month = currentDate.getMonth()+1;
+        var day = currentDate.getDate();
+        if(month<10){
+          month = "0"+month;
         }
-        else{
-          fs.write(fd, JSON.stringify(fileContent, null, "\n"), function (){});
-          res.statusCode = 201;
-          res.statusMessage = "Successfully posted";
-          res.setHeader("Location", filePath);
+        if(day<10){
+          day = "0"+day;
         }
-        res.end();
-        fs.closeSync(fd);
-      });
+
+        var fileContent = {
+          "date-created": year+"-"+month+"-"+day,
+          "content": "<p>"
+        }
+
+        fs.open(filePath, "w", function (err, fd){
+          if(err){
+            res.statusCode = 500
+            res.statusMessage = "Could not create new file";
+          }
+          else{
+            fs.write(fd, JSON.stringify(fileContent, null, "\n"), function (){});
+            res.statusCode = 201;
+            res.statusMessage = "Successfully created file";
+            res.setHeader("Location", filePath);
+          }
+          res.end();
+          fs.closeSync(fd);
+        });
+      }
     }
-    else if(fileObject.type==="fileContent"){
+    else if(fileObject.type==="fileContent"){ //updating file
       var fileName = req.url.split("/");
-      console.log(fileName);
+      fileName = fileName[fileName.length-1]; //get last element
+      console.log("Updating",fileName);
     }
   })
 }
@@ -272,7 +278,7 @@ function serverCall(req, res){
   else if(req.method==="DELETE"){
     serverDeleteMethod(req, res);
   }
-}   //main function which responds to server calls
+}
 
 
 var port = process.env.PORT || 2000;
