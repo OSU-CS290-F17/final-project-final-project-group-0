@@ -371,3 +371,22 @@ body{
   text-align: center;
   color: #4f4040;
 }
+
+/*Save file notification*/
+#file-saved-popup{
+  display: none;
+  opacity: 1;
+
+  position: fixed;
+  top: 20px;
+  left: calc(50vw - 50px);
+
+  font-size: 20px;
+  font-family: sans-serif;
+  width: 100px;
+  padding-left: 10px;
+
+  background-color: #7dd07d;
+  border-radius: 10px;
+  border: 1px solid black;
+}

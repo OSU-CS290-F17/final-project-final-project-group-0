@@ -9,7 +9,7 @@
   </div>
   <div id="file-list">
     {{#each files}}
-      {{> file file=this}}
+      {{> file file=this user=../user}}
       {{else}}
         <p>No files exist for this user</p>
     {{/each}}

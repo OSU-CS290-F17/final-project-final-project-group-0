@@ -2,81 +2,83 @@ var selecting = false;
 var selectedFiles = document.getElementsByClassName('selected');
 
 function confirmDelete(){
-  var body = document.getElementsByTagName('body')[0];
-  var popupBackground = document.createElement("div");
-  popupBackground.style.width = "100vw";
-  popupBackground.style.height = "100vh";
-  popupBackground.style.position = "fixed";
-  popupBackground.style.top = "0px";
-  popupBackground.style.left = "0px";
-  popupBackground.style.backgroundColor = "rgba(0,0,0,0.25)";
-  popupBackground.id = "questionBackground";
-  body.appendChild(popupBackground);
+  if(selecting){
+    var body = document.getElementsByTagName('body')[0];
+    var popupBackground = document.createElement("div");
+    popupBackground.style.width = "100vw";
+    popupBackground.style.height = "100vh";
+    popupBackground.style.position = "fixed";
+    popupBackground.style.top = "0px";
+    popupBackground.style.left = "0px";
+    popupBackground.style.backgroundColor = "rgba(0,0,0,0.25)";
+    popupBackground.id = "questionBackground";
+    body.appendChild(popupBackground);
 
-  var popup = document.createElement("div");
-  popup.style.width = "200px";
-  popup.style.height = "140px";
-  popup.style.position = "fixed";
-  popup.style.top = "calc(50vh - 70px)";
-  popup.style.left = "calc(50vw - 100px)";
-  popup.style.borderRadius = "10px";
-  popup.style.backgroundColor = "#ffffff";
-  popup.id = "questionPopup";
-  body.appendChild(popup);
+    var popup = document.createElement("div");
+    popup.style.width = "200px";
+    popup.style.height = "140px";
+    popup.style.position = "fixed";
+    popup.style.top = "calc(50vh - 70px)";
+    popup.style.left = "calc(50vw - 100px)";
+    popup.style.borderRadius = "10px";
+    popup.style.backgroundColor = "#ffffff";
+    popup.id = "questionPopup";
+    body.appendChild(popup);
 
-  var popupQuestion = document.createElement("div");
-  popupQuestion.textContent = "Are you sure you want to delete the selected file(s)?";
-  popupQuestion.style.fontSize = "20px";
-  popupQuestion.style.textAlign = "center";
-  popupQuestion.style.marginTop = "20px";
-  popup.appendChild(popupQuestion);
+    var popupQuestion = document.createElement("div");
+    popupQuestion.textContent = "Are you sure you want to delete the selected file(s)?";
+    popupQuestion.style.fontSize = "20px";
+    popupQuestion.style.textAlign = "center";
+    popupQuestion.style.marginTop = "20px";
+    popup.appendChild(popupQuestion);
 
-  var leftButton = document.createElement("div");
-  leftButton.textContent = "Yes";
-  leftButton.classList += "button";
-  leftButton.style.textAlign = "center";
-  leftButton.style.fontSize = "15px";
-  leftButton.style.width = "90px";
-  leftButton.style.display = "inline-block";
-  leftButton.style.marginLeft = "6px";
-  leftButton.style.marginRight = "2px";
-  leftButton.style.marginTop = "20px";
-  leftButton.style.backgroundColor = "antiquewhite";
-  leftButton.style.border = "1px solid black";
-  leftButton.style.borderRadius = "5px";
-  popup.appendChild(leftButton);
+    var leftButton = document.createElement("div");
+    leftButton.textContent = "Yes";
+    leftButton.classList += "button";
+    leftButton.style.textAlign = "center";
+    leftButton.style.fontSize = "15px";
+    leftButton.style.width = "90px";
+    leftButton.style.display = "inline-block";
+    leftButton.style.marginLeft = "6px";
+    leftButton.style.marginRight = "2px";
+    leftButton.style.marginTop = "20px";
+    leftButton.style.backgroundColor = "antiquewhite";
+    leftButton.style.border = "1px solid black";
+    leftButton.style.borderRadius = "5px";
+    popup.appendChild(leftButton);
 
-  var rightButton = document.createElement("div");
-  rightButton.textContent = "No";
-  rightButton.classList += "button";
-  rightButton.style.textAlign = "center";
-  rightButton.style.fontSize = "15px";
-  rightButton.style.width = "90px";
-  rightButton.style.display = "inline-block";
-  rightButton.style.marginLeft = "2px";
-  rightButton.style.marginRight = "6px";
-  rightButton.style.marginTop = "20px";
-  rightButton.style.backgroundColor = "antiquewhite";
-  rightButton.style.border = "1px solid black";
-  rightButton.style.borderRadius = "5px";
-  popup.appendChild(rightButton);
+    var rightButton = document.createElement("div");
+    rightButton.textContent = "No";
+    rightButton.classList += "button";
+    rightButton.style.textAlign = "center";
+    rightButton.style.fontSize = "15px";
+    rightButton.style.width = "90px";
+    rightButton.style.display = "inline-block";
+    rightButton.style.marginLeft = "2px";
+    rightButton.style.marginRight = "6px";
+    rightButton.style.marginTop = "20px";
+    rightButton.style.backgroundColor = "antiquewhite";
+    rightButton.style.border = "1px solid black";
+    rightButton.style.borderRadius = "5px";
+    popup.appendChild(rightButton);
 
-  leftButton.addEventListener('click', function (){
-    deleteSelectedFiles();
-    popup.removeChild(leftButton);
-    popup.removeChild(rightButton);
-    popup.removeChild(popupQuestion);
-    body.removeChild(popup);
-    body.removeChild(popupBackground);
-  });
+    leftButton.addEventListener('click', function (){
+      deleteSelectedFiles();
+      popup.removeChild(leftButton);
+      popup.removeChild(rightButton);
+      popup.removeChild(popupQuestion);
+      body.removeChild(popup);
+      body.removeChild(popupBackground);
+    });
 
-  rightButton.addEventListener('click', function (){
-    popup.removeChild(leftButton);
-    popup.removeChild(rightButton);
-    popup.removeChild(popupQuestion);
-    body.removeChild(popup);
-    body.removeChild(popupBackground);
-  });
+    rightButton.addEventListener('click', function (){
+      popup.removeChild(leftButton);
+      popup.removeChild(rightButton);
+      popup.removeChild(popupQuestion);
+      body.removeChild(popup);
+      body.removeChild(popupBackground);
+    });
+  }
 }
 
 function showNewFilePopup(){
@@ -96,7 +98,7 @@ function clearNewFilePopup(){
   newFileInput.childNodes[3].value = "";
 }
 
-function createNewFile(){
+function createNewFile(){ //broken
   var fileName = document.getElementById('file-name-input').childNodes[3].value;
   var fileObject = {
     "type": "newFile",
@@ -116,7 +118,8 @@ function createNewFile(){
       newFileContainer.classList.add("file");
       newFileElement = document.createElement('a');
       newFileElement.textContent = fileName;
-      newFileElement.href = window.location.href+fileName;
+      newFileElement.href = window.location.href+'/'+fileName;
+      console.log("Link:", newFileElement.href);
       newFileContainer.appendChild(newFileElement);
       fileListBox.appendChild(newFileContainer);
     }
