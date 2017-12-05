@@ -55,21 +55,26 @@ function toggleUnderline(){
   toggleTagOnSelection('u');
 }
 
-//returns array representing which child node is in parent
+//returns array representing which child 'node' is in 'parent'
 function nodePositionInParent(parent, node){
+  console.log("parent.children:",parent.children);
   var isDirectDescendant = false;
   var index;
   var indirectParent;
-  for(var a=0; a<parent.childNodes.length; a++){
-    if(parent.childNodes[a]===node){
-      index = a;
+  var hasHitCaret = 0;
+  for(var a=0; a<parent.children.length; a++){
+    if(parent.children[a]===node){
+      index = a - hasHitCaret;
       isDirectDescendant = true;
       break;
     }
-    else if(isDescendant(parent.childNodes[a],node)){
-      indirectParent = parent.childNodes[a];
-      index = a;
+    else if(isDescendant(parent.children[a],node)){
+      indirectParent = parent.children[a];
+      index = a - hasHitCaret;
       break;
+    }
+    else if(parent.children[a].id==="caret"){
+      hasHitCaret = 1;
     }
   }
   if(isDirectDescendant){ //node is one layer deep
@@ -94,11 +99,12 @@ function indexOfNode(node){
   for(var a=0; a<clientText.length; a++){ //loop through clientText
     if(!inTagName && clientText.charAt(a)==="<"){ //hit start or end of tag
       if(clientText.charAt(a+1)==="/"){ //hit end of tag
-        console.log("Tag ends at",a);
         currentTagDepth--;
-        currentPositionArray.pop();
+        if(currentPositionArray.length<(currentTagDepth-1)){
+          currentPositionArray.pop();
+        }
       }
-      else{
+      else{ //entered new tag
         currentTagDepth++;  //move down tag depth
         if(currentPositionArray.length<currentTagDepth){
           currentPositionArray.push(0);
@@ -158,6 +164,11 @@ function getTrueIndex(){
   var trueEnd = indexOfNode(selection.focusNode.parentElement);
   trueEnd += selection.focusNode.parentElement.tagName.length+2; //account for '<tag>'
   trueEnd += trueIndexInNode(selection.focusNode.parentElement, selection.focusOffset);
+  if(trueStart>trueEnd){  //swap start and end if backwards
+    var temp = trueStart;
+    trueStart = trueEnd;
+    trueEnd = temp;
+  }
   console.log("Selection from",trueStart,"to",trueEnd);
   return [trueStart, trueEnd];
 }
