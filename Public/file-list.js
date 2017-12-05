@@ -98,7 +98,7 @@ function clearNewFilePopup(){
   newFileInput.childNodes[3].value = "";
 }
 
-function createNewFile(){ //broken
+function createNewFile(){
   var fileName = document.getElementById('file-name-input').childNodes[3].value;
   var fileObject = {
     "type": "newFile",
@@ -110,9 +110,8 @@ function createNewFile(){ //broken
   request.onload = function (){
     if(request.status>=200 && request.status<=299){
       var fileListBox = document.getElementById('file-list');
-      console.log(fileListBox.getElementsByClassName('file'));
       if(fileListBox.getElementsByClassName('file').length <= 0){
-        fileListBox.removeChild(fileListBox.childNodes[1]); //remove 'no files exist' message
+        fileListBox.removeChild(fileListBox.childNodes[2]); //remove 'no files exist' message
       }
       newFileContainer = document.createElement('p');
       newFileContainer.classList.add("file");

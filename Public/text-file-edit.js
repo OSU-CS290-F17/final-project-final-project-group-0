@@ -43,70 +43,96 @@ function isInTag(node, tag){
   return false;
 }
 
+// =============================================================================
 // Toggle bold on selected text
 function toggleBold(){
-  toggleTagOnSelection('b');
-  isSaved = false;
+  // toggleTagOnSelection('b');
+  getTrueIndex();
 }
 
 //Toggle underlining on selected text
 function toggleUnderline(){
   toggleTagOnSelection('u');
-  isSaved = false;
+}
+
+//returns array representing which child node is in parent
+function nodePositionInParent(parent, node){
+  var isDirectDescendant = false;
+  var index;
+  var indirectParent;
+  for(var a=0; a<parent.childNodes.length; a++){
+    if(parent.childNodes[a]===node){
+      index = a;
+      isDirectDescendant = true;
+      break;
+    }
+    else if(isDescendant(parent.childNodes[a],node)){
+      indirectParent = parent.childNodes[a];
+      index = a;
+      break;
+    }
+  }
+  if(isDirectDescendant){ //node is one layer deep
+    return [index];
+  }
+  else{
+    var array = nodePositionInParent(indirectParent, node);
+    array.unshift(index);
+    return array;
+  }
+}
+
+//Returns index in clientText where node starts
+function indexOfNode(node){
+  var fileTextNode = document.getElementById('text-content');
+  var childArray = nodePositionInParent(fileTextNode, node);
+  console.log("childArray:",childArray);
+
+  var currentTagDepth = 0;
+  var currentPositionArray = [];
+  var inTagName = false;
+  for(var a=0; a<clientText.length; a++){ //loop through clientText
+    if(!inTagName && clientText.charAt(a)==="<"){ //hit start or end of tag
+      if(clientText.charAt(a+1)==="/"){ //hit end of tag
+        currentTagDepth--;
+        currentPositionArray.pop();
+      }
+      else{
+        currentTagDepth++;  //function has moved down tag depth
+        if(currentPositionArray.length<currentTagDepth){
+          currentPositionArray.push(0);
+        }
+        else{
+          currentPositionArray[currentTagDepth-1] += 1; //increment array at currentTagDepth
+        }
+        console.log("Tag depth increased. currentPositionArray:", currentPositionArray);
+        if(currentPositionArray.toString()===childArray.toString()){  //if loop has reached correct point
+          return a;
+        }
+      }
+      inTagName = true;
+    }
+    else if(inTagName && clientText.charAt(a)===">"){
+      inTagName = false;
+    }
+  }
+  console.error("Could not find node index");
+  return 0;
 }
 
 //Returns the indecies of the selection's start and end in clientText
-function getTrueIndex(){  //broken
+function getTrueIndex(){
   var selection = document.getSelection();
-  var fileContent = document.getElementById('text-content');
-  if(isDescendant(fileContent, selection.anchorNode)
-    && isDescendant(fileContent, selection.focusNode)){ //is in text-content div
-    if(clientText.substring(selection.anchorOffset, selection.anchorOffset+selection.toString().length)===selection.toString()){
-      return [selection.anchorOffset, selection.anchorOffset+selection.toString().length];
-    }
-
-    var trueStart;
-    var trueEnd;
-    var foundIndex = false;
-    var offset = 0;
-    for(var a=0; a<clientText.length; a++){
-      if(clientText[a]===">"){  //begin checking from end of tag
-        foundIndex = true;
-        for(var b=0; b<selection.toString().length; b++){
-          if(clientText[a+1+selection.anchorOffset+b+offset]==='<'){ //hit tag in clientText
-            offset += clientText.substring(a+1+selection.anchorOffset+b+offset).indexOf('>')+1;
-          }
-          else if(clientText[a+1+selection.anchorOffset+b+offset]!==selection.toString()[b]){
-            foundIndex = false;
-            break;
-          }
-        }
-        if(foundIndex){
-          offset += selection.toString().length;
-          return [a+1+selection.anchorOffset, a+1+selection.anchorOffset+offset];
-        }
-      }
-      // else if(clientText[a]===selection.toString()[0]){ //begin checking from beginning of selection
-      //   foundIndex = true;
-      //   for(var c=0; c<selection.toString().length; c++){
-      //     if(clientText[a+c+offset]==="<"){  //hit tag in clientText
-      //       offset += clientText.substring(a+c).indexOf('>')+1;
-      //     }
-      //     else if(clientText[a+c+offset]!==selection.toString()[c-offset]){
-      //       break;
-      //     }
-      //   }
-      //   if(foundIndex){
-      //     offset += selection.toString().length;
-      //     return [selection.anchorOffset, selection.anchorOffset+offset];
-      //   }
-      // }
-    }
-    return null;
-  }
-  else{
-    return null;
-  }
+  var trueStart = indexOfNode(selection.anchorNode.parentElement);
+  trueStart += selection.anchorNode.parentElement.tagName.length + 2;  //account for '<tag>'
+  // trueStart += tagOffset(selection.anchorNode.parentElement, selection.anchorOffset);
+  trueStart += selection.anchorOffset;
+  var trueEnd = indexOfNode(selection.focusNode.parentElement);
+  trueEnd += selection.focusNode.parentElement.tagName.length+2; //account for '<tag>'
+  // trueEnd += tagOffset(selection.focusNode.parentElement, selection.focusOffset);
+  trueEnd += selection.focusOffset;
+  console.log("True index:",[trueStart, trueEnd]);
+  return [trueStart, trueEnd];
 }
 
 //Toggle whether the selected text has a certain tag
@@ -181,6 +207,127 @@ function toggleTagOnSelection(tag){
   updateClientText(newClientText);
 }
 
+//Updates the file content client-side
+function updateClientText(newText){
+  if(newText.includes("<script")){
+    document.getElementById('text-content').innerHTML = clientText;
+  }
+  else{
+    document.getElementById('text-content').innerHTML = strInsert(newText, caret, "<span id='caret'></span>");
+    clientText = newText;
+    isSaved = false;
+  }
+  showCaret();
+}
+
+//Update caret variable on click
+function updateCaretPosition(){
+  var selection = document.getSelection();
+  if(selection.isCollapsed){
+    caret = getTrueIndex()[0];
+    showCaret();
+  }
+}
+
+//Insert caret at corret location
+function showCaret(){
+  var tempString = document.getElementById('text-content').innerHTML;
+  tempString = tempString.replace('<span id="caret"></span>', "");
+  tempString = strInsert(tempString, caret, '<span id="caret"></span>');
+  document.getElementById('text-content').innerHTML = tempString;
+}
+
+//Types the file content
+function keyPressed(event){
+  if(!event.ctrlKey){
+    var newText;
+    if(!invalidCharacters.includes(event.key) && event.key.length===1){ //Key is allowed
+      if(overriddenCharacters.includes(event.key)){
+        event.preventDefault();
+      }
+      newText = strInsert(clientText, caret, event.key.toString());
+      caret++;
+      updateClientText(newText);
+      isSaved = false;
+    }
+    else if(event.key==="Backspace"){ //delete characters
+      event.preventDefault();
+      if(caret>3){  //avoid deleting first <p>
+        if(clientText.charAt(caret-1)===">"){
+          var currentIndex = caret-1;
+          while(clientText.charAt(currentIndex)!='<'){  //work backwards until start of tag
+            currentIndex--;
+          }
+          if(clientText.substring(currentIndex, caret)==="<p>"){  //delete newline
+            newText = clientText.substring(0, caret-7)+clientText.substring(caret);
+            caret -= 7;
+          }
+          else{
+            newText = clientText.substring(0, currentIndex-1)+clientText.substring(currentIndex);
+            caret = currentIndex-1;
+          }
+          showCaret();
+          updateClientText(newText);
+        }
+        else{
+          newText = clientText.substring(0,caret-1)+clientText.substring(caret);
+          caret--;
+          updateClientText(newText);
+        }
+      }
+    }
+    else if(event.key==="Enter"){
+      newText = strInsert(clientText,caret,"</p><p>");
+      caret += 7;
+      updateClientText(newText);
+    }
+    else if(event.key==="ArrowLeft"){
+      event.preventDefault();
+      if(clientText.charAt(caret-1)===">"){ //hit tag
+        var tempCaret = caret-1;
+        while(clientText.charAt(tempCaret)!="<"){ //find beginning of tag
+          tempCaret--;
+        }
+        if(clientText.substring(tempCaret, caret)==="<p>"){
+          tempCaret-=3; //skip over '</p>'
+        }
+        if(tempCaret>=3){
+          caret=tempCaret-1;
+        }
+      }
+      else{
+        caret--;
+      }
+      showCaret();
+    }
+    else if(event.key==="ArrowRight"){
+      event.preventDefault();
+      if(clientText.charAt(caret)==="<" || clientText.charAt(caret+1)==="<"){ //hit tag
+        var tempCaret = caret+1;
+        while(clientText.charAt(tempCaret)!=">"){ //find end of tag
+          tempCaret++;
+        }
+        tempCaret++;
+        if(clientText.substring(caret, tempCaret)==="</p>"){ // </p>
+          tempCaret+=3; //skip over '<p>'
+        }
+        if(tempCaret<clientText.length){ //prevent running off end of document
+          caret = clientText.length-4;
+        }
+      }
+      else{
+        caret++;
+      }
+      showCaret();
+    }
+  }
+  else if(event.key==="s"){ //ctrl+s to save
+    event.preventDefault();
+    saveContent();
+  }
+}
+
+// =============================================================================
 //Gets the value of 'font-select' and updates the content's class
 function updateFontStyle(){
   var content = document.getElementById('text-content');
@@ -221,104 +368,7 @@ function setupFontSelection(){
   }
 }
 
-//Updates the file content client-side
-function updateClientText(newText){
-  if(newText.includes("<script")){
-    document.getElementById('text-content').innerHTML = clientText;
-  }
-  else{
-    document.getElementById('text-content').innerHTML = newText;
-    clientText = newText;
-  }
-}
-
-//Types the file content
-function keyPressed(event){
-  if(!event.ctrlKey){
-    var newText;
-    if(!invalidCharacters.includes(event.key) && event.key.length===1){ //Key is allowed
-      if(overriddenCharacters.includes(event.key)){
-        event.preventDefault();
-      }
-      newText = strInsert(clientText, caret, event.key.toString());
-      caret++;
-      updateClientText(newText);
-      isSaved = false;
-    }
-    else if(event.key==="Backspace"){ //delete characters
-      event.preventDefault();
-      if(caret>3){  //avoid deleting first <p>
-        if(clientText.charAt(caret-1)===">"){
-          var currentChar = '>';
-          var currentIndex = caret-1;
-          while(currentChar!='<'){  //work backwards until start of tag
-            currentIndex--;
-            currentChar = clientText.charAt(currentIndex);
-          }
-          if(clientText.substring(currentIndex, caret)==="<p>"){
-            newText = clientText.substring(0, caret-7)+clientText.substring(caret);
-          }
-          else{
-            newText = clientText.substring(0, currentIndex)+clientText.substring();
-          }
-        }
-        else{
-          newText = clientText.substring(0,caret-1)+clientText.substring(caret);
-          caret--;
-          updateClientText(newText);
-        }
-      }
-    }
-    else if(event.key==="Enter"){
-      newText = strInsert(clientText,caret,"</p><p>");
-      caret += 7;
-      updateClientText(newText);
-    }
-    else if(event.key==="ArrowLeft"){
-      event.preventDefault();
-      if(clientText.charAt(caret-1)===">"){ //hit tag
-        var tempCaret = caret;
-        while(clientText.charAt(tempCaret)!="<"){ //find beginning of tag
-          tempCaret--;
-        }
-        if(clientText.substring(tempCaret, caret)==="<p>"){
-          tempCaret-=4; //skip over '</p>'
-        }
-        if(tempCaret>3){
-          caret=tempCaret;
-        }
-      }
-      else{
-        caret--;
-      }
-    }
-    else if(event.key==="ArrowRight"){
-      event.preventDefault();
-      if(clientText.charAt(caret)==="<"){ //hit tag
-        var tempCaret = caret;
-        while(clientText.charAt(tempCaret)!=">"){ //find end of tag
-          tempCaret++;
-        }
-        tempCaret++;
-        if(clientText.substring(caret, tempCaret)==="</p>"){ // </p>
-          tempCaret+=3; //skip over '<p>'
-        }
-        if(tempCaret<clientText.length){ //not at end of document
-          caret = tempCaret;
-        }
-      }
-      else{
-        caret++;
-      }
-    }
-  }
-  else if(event.key==="s"){ //ctrl+s to save
-    event.preventDefault();
-    toggleSaveOptions();
-    saveContent();
-  }
-}
-
+// =============================================================================
 // Displays or hides the save options popup
 function toggleSaveOptions(){
   var saveOptionsPopup = document.getElementById('save-options-popup');
@@ -400,6 +450,7 @@ function showFileSavedPopup(){
 }
 
 
+showCaret();
 setupFontSelection();
 
 var toggleBoldButton = document.getElementById('bold-button');
@@ -423,7 +474,9 @@ autosaveSelectionMenu.addEventListener("change", updateAutosave);
 document.addEventListener("keypress", keyPressed);
 
 document.getElementById('text-content').focus();
+// document.getElementById('text-content').addEventListener("click", updateCaretPosition);
 
+//Warn user if they try to leave without saving
 window.onbeforeunload = function(){
   if(!isSaved){
     return "Make sure you have saved your work"
