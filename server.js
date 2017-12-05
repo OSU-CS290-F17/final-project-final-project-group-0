@@ -21,17 +21,15 @@ app.use(express.static(path.join(__dirname,"Public")));
 
 
 //Home page
-function homePage(req, res, next){
+app.get(["/", "/home"], function(req, res, next){
   var dataObject = {
     title_bar_id: "main-title-bar",
-    page_title: "Generic Company",
+    page_title: "Contritum Files",
     user: currentUser,
     login: "Logout"
   }
   res.status(200).render('home', dataObject);
-}
-app.get("/", homePage);
-app.get("/home", homePage);
+});
 
 //File list page
 app.get("/files/:user", function (req, res, next){
@@ -277,7 +275,7 @@ mongoClient.connect(mongoURL, function (err, connection){
     throw(err);
   }
   db = connection;
-  console.log("==MongoDB connection established.");
+  console.log("==Database connection established.");
   app.listen(port, function (){
     console.log("==Server started on port "+port+".");
   });

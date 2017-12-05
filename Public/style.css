@@ -328,6 +328,8 @@ body{
   position: absolute;
   width: 1px;
   height: 20px;
+
+  color: rgba(255, 255, 255, 0);
   background-color: black;
   border: 0px;
 }

@@ -86,7 +86,7 @@ function nodePositionInParent(parent, node){
 function indexOfNode(node){
   var fileTextNode = document.getElementById('text-content');
   var childArray = nodePositionInParent(fileTextNode, node);
-  console.log("childArray:",childArray);
+  console.log("Child array:", childArray);
 
   var currentTagDepth = 0;
   var currentPositionArray = [];
@@ -94,18 +94,18 @@ function indexOfNode(node){
   for(var a=0; a<clientText.length; a++){ //loop through clientText
     if(!inTagName && clientText.charAt(a)==="<"){ //hit start or end of tag
       if(clientText.charAt(a+1)==="/"){ //hit end of tag
+        console.log("Tag ends at",a);
         currentTagDepth--;
         currentPositionArray.pop();
       }
       else{
-        currentTagDepth++;  //function has moved down tag depth
+        currentTagDepth++;  //move down tag depth
         if(currentPositionArray.length<currentTagDepth){
           currentPositionArray.push(0);
         }
         else{
           currentPositionArray[currentTagDepth-1] += 1; //increment array at currentTagDepth
         }
-        console.log("Tag depth increased. currentPositionArray:", currentPositionArray);
         if(currentPositionArray.toString()===childArray.toString()){  //if loop has reached correct point
           return a;
         }
@@ -120,18 +120,45 @@ function indexOfNode(node){
   return 0;
 }
 
+//Returns index in 'node.innerHTML' where index should be
+function trueIndexInNode(node, index){
+  var inTag = 0;
+  var inTagName = false;
+  var indexOutOfTags = 0;
+  var text = node.innerHTML;
+  text = text.replace('<span id="caret"></span>', "");
+  for(var a=0; a<text.length; a++){
+    if(inTag!==0 && text.charAt(a)==="<" && text.charAt(a+1)==="/"){
+      inTag--;
+      inTagName = true;
+    }
+    else if(!inTagName && text.charAt(a)==="<"){
+      inTag++;
+      inTagName = true;
+    }
+    else if(inTagName && text.charAt(a)===">"){
+      inTagName = false;
+    }
+    else if(!inTagName && inTag===0){
+      indexOutOfTags++;
+      if(indexOutOfTags === index+1){
+        return a;
+      }
+    }
+  }
+  return a;
+}
+
 //Returns the indecies of the selection's start and end in clientText
 function getTrueIndex(){
   var selection = document.getSelection();
   var trueStart = indexOfNode(selection.anchorNode.parentElement);
   trueStart += selection.anchorNode.parentElement.tagName.length + 2;  //account for '<tag>'
-  // trueStart += tagOffset(selection.anchorNode.parentElement, selection.anchorOffset);
-  trueStart += selection.anchorOffset;
+  trueStart += trueIndexInNode(selection.anchorNode.parentElement, selection.anchorOffset);
   var trueEnd = indexOfNode(selection.focusNode.parentElement);
   trueEnd += selection.focusNode.parentElement.tagName.length+2; //account for '<tag>'
-  // trueEnd += tagOffset(selection.focusNode.parentElement, selection.focusOffset);
-  trueEnd += selection.focusOffset;
-  console.log("True index:",[trueStart, trueEnd]);
+  trueEnd += trueIndexInNode(selection.focusNode.parentElement, selection.focusOffset);
+  console.log("Selection from",trueStart,"to",trueEnd);
   return [trueStart, trueEnd];
 }
 
@@ -146,8 +173,6 @@ function toggleTagOnSelection(tag){
   var selection = document.getSelection();
   var indexStart = index[0];
   var indexEnd = index[1];
-
-  console.log("Selection from",indexStart,"to",indexEnd);
 
   var newClientText = clientText;
   var newSubstring = newClientText.substring(indexStart, indexEnd);
@@ -291,7 +316,7 @@ function keyPressed(event){
         if(clientText.substring(tempCaret, caret)==="<p>"){
           tempCaret-=3; //skip over '</p>'
         }
-        if(tempCaret>=3){
+        if(tempCaret>=4){
           caret=tempCaret-1;
         }
       }
@@ -308,10 +333,16 @@ function keyPressed(event){
           tempCaret++;
         }
         tempCaret++;
-        if(clientText.substring(caret, tempCaret)==="</p>"){ // </p>
+        if(clientText.substring(caret, tempCaret)==="</p>"){ //newline
           tempCaret+=3; //skip over '<p>'
         }
-        if(tempCaret<clientText.length){ //prevent running off end of document
+        else if(clientText.substring(caret+1, tempCaret)==="</p>"){
+          tempCaret-=4;
+        }
+        if(tempCaret<clientText.length-3){ //prevent running off end of document
+          caret = tempCaret;
+        }
+        else{
           caret = clientText.length-4;
         }
       }
@@ -473,7 +504,7 @@ autosaveSelectionMenu.addEventListener("change", updateAutosave);
 
 document.addEventListener("keypress", keyPressed);
 
-document.getElementById('text-content').focus();
+// document.getElementById('text-content').focus();
 // document.getElementById('text-content').addEventListener("click", updateCaretPosition);
 
 //Warn user if they try to leave without saving
