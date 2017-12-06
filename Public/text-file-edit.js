@@ -46,11 +46,11 @@ function isInTag(node, tag){
 // =============================================================================
 // Toggle bold on selected text
 function toggleBold(){
-  toggleTagOnSelection('b');
-  // var array = getTrueIndex();
-  // var newText = strInsert(clientText, array[0], "|");
-  // newText = strInsert(newText, array[1]+1, "|");
-  // console.log(newText);
+  // toggleTagOnSelection('b');
+  var array = getTrueIndex();
+  var newText = strInsert(clientText, array[0], "|");
+  newText = strInsert(newText, array[1]+1, "|");
+  console.log(newText);
 }
 
 //Toggle underlining on selected text
@@ -182,46 +182,18 @@ function getIndexBefore(node, offset){
   }
 }
 
-//Returns index in 'node.innerHTML' where index should be
-function trueIndexInNode(node, index){
-  var inTag = 0;
-  var inTagName = false;
-  var indexOutOfTags = 0;
-  var text = node.innerHTML;
-  text = text.replace('<span id="caret"></span>', "");
-  for(var a=0; a<text.length; a++){
-    if(inTag!==0 && text.charAt(a)==="<" && text.charAt(a+1)==="/"){
-      inTag--;
-      inTagName = true;
-    }
-    else if(!inTagName && text.charAt(a)==="<"){
-      inTag++;
-      inTagName = true;
-    }
-    else if(inTagName && text.charAt(a)===">"){
-      inTagName = false;
-    }
-    else if(!inTagName && inTag===0){
-      indexOutOfTags++;
-      if(indexOutOfTags === index+1){
-        return a;
-      }
-    }
-  }
-  return a;
-}
-
 //Returns the indecies of the selection's start and end in clientText
-function getTrueIndex(){
+function getTrueIndex(){  //fixed?
   var selection = document.getSelection();
   var trueStart = indexOfNode(selection.anchorNode.parentElement);
   trueStart += selection.anchorNode.parentElement.tagName.length + 2;  //account for '<tag>'
-  trueStart += trueIndexInNode(selection.anchorNode.parentElement, selection.anchorOffset);
+  trueStart += selection.anchorOffset;
   trueStart += getIndexBefore(selection.anchorNode, selection.anchorOffset);
 
   var trueEnd = indexOfNode(selection.focusNode.parentElement);
   trueEnd += selection.focusNode.parentElement.tagName.length+2; //account for '<tag>'
-  trueEnd += trueIndexInNode(selection.focusNode.parentElement, selection.focusOffset);
+  // trueEnd += trueIndexInNode(selection.focusNode.parentElement, selection.focusOffset);
+  trueEnd += selection.focusOffset;
   trueEnd += getIndexBefore(selection.focusNode, selection.focusOffset);
 
   if(trueStart>trueEnd){  //swap start and end if backwards
@@ -358,6 +330,15 @@ function keyPressed(event){
           if(clientText.substring(currentIndex, caret)==="<p>"){  //delete newline
             newText = clientText.substring(0, caret-7)+clientText.substring(caret);
             caret -= 7;
+          }
+          else if(clientText.charAt(currentIndex-1)===">"){
+            currentIndex--;
+            while(clientText.charAt(currentIndex)!='<'){
+              currentIndex--;
+            }
+            currentIndex--;
+            newText = clientText.substring(0,currentIndex)+clientText.substring(caret);
+            caret = currentIndex;
           }
           else{
             newText = clientText.substring(0, currentIndex-1)+clientText.substring(currentIndex);
