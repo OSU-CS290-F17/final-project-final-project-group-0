@@ -51,7 +51,6 @@ function toggleBold(){
   var newText = strInsert(clientText, array[0], "|");
   newText = strInsert(newText, array[1]+1, "|");
   console.log(newText);
-  // updateClientText(newText);
 }
 
 //Toggle underlining on selected text
@@ -133,7 +132,7 @@ function getIndexBefore(node, offset){
   if(node.children && node.children.length===0){ //node contains no elements
     return 0;
   }
-  else{
+  else{   //node has at least one element
     var parent = node.parentElement;
     var text = parent.innerHTML;
     var isNodeNum;
@@ -147,7 +146,6 @@ function getIndexBefore(node, offset){
         hitCaret = true;
       }
     }
-    console.log(isNodeNum);
 
     var currentNodeNum = 0;
     var inTag = 0;
@@ -163,10 +161,10 @@ function getIndexBefore(node, offset){
         inTag--;
         inTagName = true;
       }
-      else if(!inTagName && text.charAt(b)==="<"){
+      else if(text.charAt(b)==="<"){
         inTag++;
         inTagName = true;
-        if(inTag===1){  //start of tag
+        if(inTag===1 && b>=1){  //start of tag
           currentNodeNum++;
         }
       }
@@ -231,7 +229,6 @@ function getTrueIndex(){
     trueStart = trueEnd;
     trueEnd = temp;
   }
-  console.log("Selection from",trueStart,"to",trueEnd);
   return [trueStart, trueEnd];
 }
 
@@ -318,14 +315,16 @@ function updateClientText(newText){
   showCaret();
 }
 
+// =============================================================================
 //Update caret variable on click
-function updateCaretPosition(){
+function updateCaretPosition(event){
   var selection = document.getSelection();
   if(selection.isCollapsed){
     var position = indexOfNode(selection.anchorNode.parentElement);
     position += selection.anchorNode.parentElement.tagName.length + 2;
     position += trueIndexInNode(selection.anchorNode.parentElement, selection.focusOffset);
-    console.log(position);
+    position += getIndexBefore(selection.anchorNode, selection.anchorOffset);
+    console.log(strInsert(clientText, position, "|"));
   }
 }
 
