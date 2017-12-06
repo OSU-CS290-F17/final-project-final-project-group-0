@@ -47,7 +47,11 @@ function isInTag(node, tag){
 // Toggle bold on selected text
 function toggleBold(){
   // toggleTagOnSelection('b');
-  getTrueIndex();
+  var array = getTrueIndex();
+  var newText = strInsert(clientText, array[0], "|");
+  newText = strInsert(newText, array[1]+1, "|");
+  console.log(newText);
+  // updateClientText(newText);
 }
 
 //Toggle underlining on selected text
@@ -57,7 +61,6 @@ function toggleUnderline(){
 
 //returns array representing which child 'node' is in 'parent'
 function nodePositionInParent(parent, node){
-  console.log("parent.children:",parent.children);
   var isDirectDescendant = false;
   var index;
   var indirectParent;
@@ -91,7 +94,6 @@ function nodePositionInParent(parent, node){
 function indexOfNode(node){
   var fileTextNode = document.getElementById('text-content');
   var childArray = nodePositionInParent(fileTextNode, node);
-  console.log("Child array:", childArray);
 
   var currentTagDepth = 0;
   var currentPositionArray = [];
@@ -124,6 +126,62 @@ function indexOfNode(node){
   }
   console.error("Could not find node index");
   return 0;
+}
+
+//Returns index before node before selection offset
+function getIndexBefore(node, offset){
+  if(node.children && node.children.length===0){ //node contains no elements
+    return 0;
+  }
+  else{
+    var parent = node.parentElement;
+    var text = parent.innerHTML;
+    var isNodeNum;
+    var hitCaret = false;
+    for(var a=0; a<parent.childNodes.length; a++){  //determine index of node
+      if(parent.childNodes.item(a)===node){
+        isNodeNum = a;
+        break;
+      }
+      else if(parent.childNodes.item(a).id==="caret"){
+        hitCaret = true;
+      }
+    }
+    console.log(isNodeNum);
+
+    var currentNodeNum = 0;
+    var inTag = 0;
+    var inTagName = false;
+    for(var b=0; b<text.length; b++){
+      if(text.charAt(b)===">"){ //end a tag name
+        inTagName=false;
+        if(inTag===0){  //end node
+          currentNodeNum++;
+        }
+      }
+      else if(text.charAt(b)==="<" && text.charAt(b+1)==="/"){
+        inTag--;
+        inTagName = true;
+      }
+      else if(!inTagName && text.charAt(b)==="<"){
+        inTag++;
+        inTagName = true;
+        if(inTag===1){  //start of tag
+          currentNodeNum++;
+        }
+      }
+      if(currentNodeNum===isNodeNum){
+        if(hitCaret){ //index is after caret
+          return b-23;
+        }
+        else{
+          return b;
+        }
+      }
+    }
+    console.error("Could not determine index before node");
+    return 0;
+  }
 }
 
 //Returns index in 'node.innerHTML' where index should be
@@ -161,9 +219,13 @@ function getTrueIndex(){
   var trueStart = indexOfNode(selection.anchorNode.parentElement);
   trueStart += selection.anchorNode.parentElement.tagName.length + 2;  //account for '<tag>'
   trueStart += trueIndexInNode(selection.anchorNode.parentElement, selection.anchorOffset);
+  trueStart += getIndexBefore(selection.anchorNode, selection.anchorOffset);
+
   var trueEnd = indexOfNode(selection.focusNode.parentElement);
   trueEnd += selection.focusNode.parentElement.tagName.length+2; //account for '<tag>'
   trueEnd += trueIndexInNode(selection.focusNode.parentElement, selection.focusOffset);
+  trueEnd += getIndexBefore(selection.focusNode, selection.focusOffset);
+
   if(trueStart>trueEnd){  //swap start and end if backwards
     var temp = trueStart;
     trueStart = trueEnd;
@@ -246,7 +308,7 @@ function toggleTagOnSelection(tag){
 //Updates the file content client-side
 function updateClientText(newText){
   if(newText.includes("<script")){
-    document.getElementById('text-content').innerHTML = clientText;
+    document.getElementById('text-content').innerHTML = clientText.replace("<script","");
   }
   else{
     document.getElementById('text-content').innerHTML = strInsert(newText, caret, "<span id='caret'></span>");
@@ -260,8 +322,10 @@ function updateClientText(newText){
 function updateCaretPosition(){
   var selection = document.getSelection();
   if(selection.isCollapsed){
-    caret = getTrueIndex()[0];
-    showCaret();
+    var position = indexOfNode(selection.anchorNode.parentElement);
+    position += selection.anchorNode.parentElement.tagName.length + 2;
+    position += trueIndexInNode(selection.anchorNode.parentElement, selection.focusOffset);
+    console.log(position);
   }
 }
 
@@ -362,6 +426,12 @@ function keyPressed(event){
       }
       showCaret();
     }
+    else if(event.key==="Tab"){
+      event.preventDefault();
+      newText = strInsert(clientText, caret, "\t");
+      caret++;
+      updateClientText(newText);
+    }
   }
   else if(event.key==="s"){ //ctrl+s to save
     event.preventDefault();
@@ -426,7 +496,7 @@ function toggleSaveOptions(){
 function saveContent(){
   var contentObject = {
     "type": "fileContent",
-    "textContent": clientText,
+    "textContent": clientText.replace("<script>", "").replace("<script", ""),
     "font": document.getElementById('font-selection').value
   }
   var request = new XMLHttpRequest();
@@ -516,7 +586,7 @@ autosaveSelectionMenu.addEventListener("change", updateAutosave);
 document.addEventListener("keypress", keyPressed);
 
 // document.getElementById('text-content').focus();
-// document.getElementById('text-content').addEventListener("click", updateCaretPosition);
+document.getElementById('text-content').addEventListener("click", updateCaretPosition);
 
 //Warn user if they try to leave without saving
 window.onbeforeunload = function(){
