@@ -46,11 +46,11 @@ function isInTag(node, tag){
 // =============================================================================
 // Toggle bold on selected text
 function toggleBold(){
-  // toggleTagOnSelection('b');
-  var array = getTrueIndex();
-  var newText = strInsert(clientText, array[0], "|");
-  newText = strInsert(newText, array[1]+1, "|");
-  console.log(newText);
+  toggleTagOnSelection('b');
+  // var array = getTrueIndex();
+  // var newText = strInsert(clientText, array[0], "|");
+  // newText = strInsert(newText, array[1]+1, "|");
+  // console.log(newText);
 }
 
 //Toggle underlining on selected text
@@ -253,7 +253,6 @@ function toggleTagOnSelection(tag){
   }
   else{
     if(newClientText.substring(indexStart-(2+tag.length),indexStart)==="<"+tag+">"){  //tag starts at selection
-      console.log("Tag starts at selection");
       if(newClientText.substring(indexEnd, indexEnd+3+tag.length)==="</"+tag+">"){
         newClientText = newClientText.substring(0,indexStart-(2+tag.length))+newClientText.substring(indexStart);
         indexStart -= 2+tag.length;
@@ -272,23 +271,21 @@ function toggleTagOnSelection(tag){
       }
     }
     else if(newSubstring.includes("<"+tag+">")){  //tag starts in selection
-      console.log("Tag starts in selection");
       newSubstring = newSubstring.replace("<"+tag+">","");
       if(newSubstring.includes("</"+tag+">")){
         newSubstring = newSubstring.replace("</"+tag+">","");
         newClientText = newClientText.substring(0,indexStart)+"<"+tag+">"+newSubstring+"</"+tag+">"+newClientText.substring(indexEnd);
       }
       else if(newClientText.substring(indexEnd, indexEnd+3+tag.length)==="</"+tag+">"){
-        newClientText = newClientText.substring(0,indexStart)+"<"+tag+">"+newSubstring+newClientText.substring(indexEnd-(3+tag.length));//broken
+        newClientText = newClientText.substring(0,indexStart)+"<"+tag+">"+newSubstring+newClientText.substring(indexEnd);
       }
       else{
         newClientText = newClientText.substring(0,indexStart)+"<"+tag+">"+newSubstring+newClientText.substring(indexEnd);
       }
     }
     else{ //tag starts before selection
-      console.log("Tag starts before selection");
       if(newClientText.substring(indexEnd, indexEnd+3+tag.length)==="</"+tag+">"){
-        newClientText = newClientText.substring(0,indexStart)+"</"+tag+">"+newSubstring+newClientText.substring(indexEnd-(3+tag.length));//broken
+        newClientText = newClientText.substring(0,indexStart)+"</"+tag+">"+newSubstring+newClientText.substring(indexEnd);
       }
       else if(newSubstring.includes("</"+tag+">")){
         newSubstring = newSubstring.replace("</"+tag+">","");
@@ -319,12 +316,13 @@ function updateClientText(newText){
 //Update caret variable on click
 function updateCaretPosition(event){
   var selection = document.getSelection();
-  if(selection.isCollapsed){
+  if(selection.isCollapsed && event.target.id!=="caret"){
     var position = indexOfNode(selection.anchorNode.parentElement);
     position += selection.anchorNode.parentElement.tagName.length + 2;
     position += trueIndexInNode(selection.anchorNode.parentElement, selection.focusOffset);
     position += getIndexBefore(selection.anchorNode, selection.anchorOffset);
-    console.log(strInsert(clientText, position, "|"));
+    caret = position;
+    showCaret();
   }
 }
 
