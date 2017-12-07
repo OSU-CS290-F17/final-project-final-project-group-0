@@ -4,7 +4,7 @@ var isSaved = true;
 var autoSaveTimer;
 
 var invalidCharacters = ["<",">"];
-var overriddenCharacters = [" "];  //characters to override default behavior on
+var overriddenCharacters = [" ","/"];  //characters to override default behavior on
 
 //Inserts substring into string at index
 function strInsert(string, index, substring){
@@ -46,11 +46,11 @@ function isInTag(node, tag){
 // =============================================================================
 // Toggle bold on selected text
 function toggleBold(){
-  // toggleTagOnSelection('b');
-  var array = getTrueIndex();
-  var newText = strInsert(clientText, array[0], "|");
-  newText = strInsert(newText, array[1]+1, "|");
-  console.log(newText);
+  toggleTagOnSelection('b');
+  // var array = getTrueIndex();
+  // var newText = strInsert(clientText, array[0], "|");
+  // newText = strInsert(newText, array[1]+1, "|");
+  // console.log(newText);
 }
 
 //Toggle underlining on selected text
@@ -192,7 +192,6 @@ function getTrueIndex(){  //fixed?
 
   var trueEnd = indexOfNode(selection.focusNode.parentElement);
   trueEnd += selection.focusNode.parentElement.tagName.length+2; //account for '<tag>'
-  // trueEnd += trueIndexInNode(selection.focusNode.parentElement, selection.focusOffset);
   trueEnd += selection.focusOffset;
   trueEnd += getIndexBefore(selection.focusNode, selection.focusOffset);
 
@@ -204,69 +203,134 @@ function getTrueIndex(){  //fixed?
   return [trueStart, trueEnd];
 }
 
+//removes the tag at given index
+function removeTag(index, tag){
+  var tempIndex = index;
+  var tempIndex2 = index;
+  while(clientText.substring(tempIndex,tempIndex2+1)!=="</"+tag+">"){ //remove tag end
+    tempIndex2++;
+    if(clientText.charAt(tempIndex2)==="<"){
+      tempIndex = tempIndex2;
+    }
+    else if(tempIndex2>clientText.length){
+      console.error("Could not find tag end");
+      return;
+    }
+  }
+  var newText = clientText.substring(0,tempIndex)+clientText.substring(tempIndex2+1);
+
+  while(clientText.substring(tempIndex,tempIndex2+1)!=="<"+tag+">"){
+    tempIndex--;
+    if(clientText.charAt(tempIndex)===">"){
+      tempIndex2 = tempIndex;
+    }
+    else if(tempIndex<0){
+      console.error("Could not find tag start");
+      return;
+    }
+  }
+  newText = newText.substring(0,tempIndex)+newText.substring(tempIndex2+1);
+  console.log(newText);
+  updateClientText(newText);
+}
+
 //Toggle whether the selected text has a certain tag
 function toggleTagOnSelection(tag){
   tag = tag.toLowerCase();
-
   var index = getTrueIndex();
-  if(!index){   //end function if selection is not in the field
+  if(!index){
     return;
   }
+
   var selection = document.getSelection();
   var indexStart = index[0];
   var indexEnd = index[1];
-
   var newClientText = clientText;
-  var newSubstring = newClientText.substring(indexStart, indexEnd);
-  var hasTag = isInTag(selection.anchorNode, tag) || isInTag(selection.focusNode, tag) || newSubstring.includes("<"+tag+">");
-  if(!hasTag){
-    newClientText = strInsert(newClientText, indexEnd, "</"+tag+">");
-    newClientText = strInsert(newClientText, indexStart, "<"+tag+">");
+  var newSubstring = clientText.substring(indexStart, indexEnd);
+  if(selection.anchorNode===selection.focusNode
+      && selection.anchorNode.textContent===selection.toString()
+      && selection.anchorNode.parentElement.tagName.toLowerCase()===tag){ //tag only contains selection
+    removeTag(indexStart, tag);
+    return;
+  }
+
+  var selectionIsInTag = isInTag(selection.anchorNode, tag) || isInTag(selection.focusNode, tag);
+  if(selectionIsInTag){ //selection is partially in tag
+    var tagStart = indexStart;
+    if(isInTag(selection.anchorNode, tag)){ //selection starts in tag
+      while(clientText.substring(tagStart-(tag.length+2),tagStart)!=="<"+tag+">"){
+        tagStart--;
+      }
+    }
+    else{
+      while(clientText.substring(tagStart-(tag.length+2),tagStart)!=="<"+tag+">"){
+        tagStart++;
+      }
+    }
+    var tagEnd = indexEnd;
+    if(isInTag(selection.focusNode, tag)){  //selection ends in tag
+      while(clientText.substring(tagEnd,tagEnd+(tag.length+3))!=="</"+tag+">"){
+        tagEnd++;
+      }
+    }
+    else{
+      while(clientText.substring(tagEnd,tagEnd+(tag.length+3))!=="</"+tag+">"){
+        tagEnd--;
+      }
+    }
+
+    if(selection.anchorNode.textContent===selection.toString()){  //node only contains selection
+      removeTag(indexStart, tag);
+      return;
+    }
+    else if(selection.focusNode.textContent===selection.toString()){  //node only contains selection
+      removeTag(indexEnd, tag);
+      return;
+    }
+    else{
+      if((tagEnd===indexEnd || tagEnd==(indexEnd+(tag.length+3)))
+      && (tagStart===indexStart || tagStart==(indexStart+(tag.length+2)))){ //tag only contains selection
+        removeTag(indexStart, tag);
+        return;
+      }
+      else if(tagEnd===indexEnd || tagEnd==(indexEnd-(tag.length+3))){ //tag ends at selection
+        console.log("Tag ends at selection");
+        if(tagStart<indexStart){  //tag starts before selection
+          newClientText = newClientText.substring(0,indexStart)+"</"+tag+">"
+              +newClientText.substring(indexStart, tagEnd)
+              +newClientText.substring(tagEnd+(tag.length+3));
+          //newClientText = properlyNestTags(newClientText);
+          console.log(newClientText);
+        }
+        else{
+          //move start to index start
+        }
+      }
+      else if(tagEnd<indexEnd){ //tag ends in selection
+        //move end to after selection
+      }
+      else{ //tag ends after selection
+        //
+      }
+    }
   }
   else{
-    if(newClientText.substring(indexStart-(2+tag.length),indexStart)==="<"+tag+">"){  //tag starts at selection
-      if(newClientText.substring(indexEnd, indexEnd+3+tag.length)==="</"+tag+">"){
-        newClientText = newClientText.substring(0,indexStart-(2+tag.length))+newClientText.substring(indexStart);
-        indexStart -= 2+tag.length;
-        newClientText = newClientText.substring(0,indexStart)+newSubstring+newClientText.substring(indexEnd+1);
-      }
-      else if(newSubstring.includes("</"+tag+">")){
-        newSubstring = newSubstring.replace("</"+tag+">","");
-        newSubstring += "</"+tag+">";
-        newClientText = newClientText.substring(0,indexStart)+newSubstring+newClientText.substring(indexEnd);
-      }
-      else{
-        newClientText = newClientText.substring(0,indexStart-(2+tag.length))+newClientText.substring(indexStart);
-        indexStart -= 2+tag.length;
-        indexEnd -= 2+tag.length;
-        newClientText = newClientText.substring(0,indexStart)+newSubstring+"<"+tag+">"+newClientText.substring(indexEnd);
+    var innerStart = indexStart;
+    var innerEnd = indexEnd;
+    while(clientText.charAt(innerStart)==="<"){
+      while(clientText.charAt(innerStart-1)!==">"){
+        innerStart++;
       }
     }
-    else if(newSubstring.includes("<"+tag+">")){  //tag starts in selection
-      newSubstring = newSubstring.replace("<"+tag+">","");
-      if(newSubstring.includes("</"+tag+">")){
-        newSubstring = newSubstring.replace("</"+tag+">","");
-        newClientText = newClientText.substring(0,indexStart)+"<"+tag+">"+newSubstring+"</"+tag+">"+newClientText.substring(indexEnd);
-      }
-      else if(newClientText.substring(indexEnd, indexEnd+3+tag.length)==="</"+tag+">"){
-        newClientText = newClientText.substring(0,indexStart)+"<"+tag+">"+newSubstring+newClientText.substring(indexEnd);
-      }
-      else{
-        newClientText = newClientText.substring(0,indexStart)+"<"+tag+">"+newSubstring+newClientText.substring(indexEnd);
+    while(clientText.charAt(innerEnd-1)===">"){
+      while(clientText.charAt(innerEnd)!=="<"){
+        innerEnd--;
       }
     }
-    else{ //tag starts before selection
-      if(newClientText.substring(indexEnd, indexEnd+3+tag.length)==="</"+tag+">"){
-        newClientText = newClientText.substring(0,indexStart)+"</"+tag+">"+newSubstring+newClientText.substring(indexEnd);
-      }
-      else if(newSubstring.includes("</"+tag+">")){
-        newSubstring = newSubstring.replace("</"+tag+">","");
-        newClientText = newClientText.substring(0,indexStart)+newSubstring+"</"+tag+">"+newClientText.substring(indexEnd);
-      }
-      else{
-        newClientText = newClientText.substring(0,indexStart)+"</"+tag+">"+newSubstring+"<"+tag+">"+newClientText.substring(indexEnd);
-      }
-    }
+    var newClientText = clientText.substring(0, innerStart);
+    newClientText += "<"+tag+">"+clientText.substring(innerStart,innerEnd)+"</"+tag+">";
+    newClientText += clientText.substring(innerEnd);
+    console.log(newClientText);
   }
   updateClientText(newClientText);
 }
@@ -277,12 +341,47 @@ function updateClientText(newText){
     document.getElementById('text-content').innerHTML = clientText.replace("<script","");
   }
   else{
+    newText = properlyNestTags(newText);
     document.getElementById('text-content').innerHTML = strInsert(newText, caret, "<span id='caret'></span>");
     clientText = newText;
     isSaved = false;
   }
   showCaret();
 }
+
+//Rearrange tags in text so they are nested properly
+function properlyNestTags(text){
+  var inTags = [];
+  var allGood = true;
+  var tagName;
+  for(var a=0; a<text.length; a++){
+    if(text.charAt(a)==="<"){
+      var temp = a+1;
+      tagName = "";
+      while(text.charAt(temp)!==">"){
+        tagName += text.charAt(temp);
+        temp++;
+      }
+      if(text.charAt(a+1)==="/"){ //hit end of tag
+        tagName = tagName.substring(1); //remove '/' at beginning
+        var tempTag = inTags.pop();
+        if(tempTag!==tagName){
+          console.log("Tags are improperly nested");
+          allGood=false;
+        }
+      }
+      else{ //hit beginning of tag
+        inTags.push(tagName);
+      }
+      a = temp;
+    }
+  }
+  return text;
+}
+
+console.log(properlyNestTags("<b><u>Word</u></b>"));
+console.log(properlyNestTags("<b><u>Word</b></u>"));
+
 
 // =============================================================================
 //Update caret variable on click
@@ -291,7 +390,7 @@ function updateCaretPosition(event){
   if(selection.isCollapsed && event.target.id!=="caret"){
     var position = indexOfNode(selection.anchorNode.parentElement);
     position += selection.anchorNode.parentElement.tagName.length + 2;
-    position += trueIndexInNode(selection.anchorNode.parentElement, selection.focusOffset);
+    position += selection.focusOffset;
     position += getIndexBefore(selection.anchorNode, selection.anchorOffset);
     caret = position;
     showCaret();
@@ -521,7 +620,6 @@ function updateAutosave(){
 //Fade out the fileSaved popup
 function fadeFileSavedPopup(){
   var fileSavedPopup = document.getElementById('file-saved-popup');
-  // console.log("Opacity:",window.getComputedStyle(fileSavedPopup).getPropertyValue("opacity"));
   if(window.getComputedStyle(fileSavedPopup).getPropertyValue("opacity")<=0){
     fileSavedPopup.style.display = "none";
     fileSavedPopup.style.opacity = 1;
