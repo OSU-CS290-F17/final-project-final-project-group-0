@@ -47,10 +47,6 @@ function isInTag(node, tag){
 // Toggle bold on selected text
 function toggleBold(){
   toggleTagOnSelection('b');
-  // var array = getTrueIndex();
-  // var newText = strInsert(clientText, array[0], "|");
-  // newText = strInsert(newText, array[1]+1, "|");
-  // console.log(newText);
 }
 
 //Toggle underlining on selected text
@@ -101,7 +97,7 @@ function indexOfNode(node){
     if(!inTagName && clientText.charAt(a)==="<"){ //hit start or end of tag
       if(clientText.charAt(a+1)==="/"){ //hit end of tag
         currentTagDepth--;
-        if(currentPositionArray.length<(currentTagDepth-1)){
+        if(currentPositionArray.length>(currentTagDepth+1)){
           currentPositionArray.pop();
         }
       }
@@ -183,7 +179,7 @@ function getIndexBefore(node, offset){
 }
 
 //Returns the indecies of the selection's start and end in clientText
-function getTrueIndex(){  //fixed?
+function getTrueIndex(){
   var selection = document.getSelection();
   var trueStart = indexOfNode(selection.anchorNode.parentElement);
   trueStart += selection.anchorNode.parentElement.tagName.length + 2;  //account for '<tag>'
@@ -230,7 +226,6 @@ function removeTag(index, tag){
     }
   }
   newText = newText.substring(0,tempIndex)+newText.substring(tempIndex2+1);
-  console.log(newText);
   updateClientText(newText);
 }
 
@@ -243,6 +238,10 @@ function toggleTagOnSelection(tag){
   }
 
   var selection = document.getSelection();
+  if(selection.isCollapsed){
+    return;
+  }
+
   var indexStart = index[0];
   var indexEnd = index[1];
   var newClientText = clientText;
@@ -254,7 +253,9 @@ function toggleTagOnSelection(tag){
     return;
   }
 
-  var selectionIsInTag = isInTag(selection.anchorNode, tag) || isInTag(selection.focusNode, tag);
+  var selectionIsInTag = isInTag(selection.anchorNode, tag)
+      || isInTag(selection.focusNode, tag)
+      || newSubstring.includes("<"+tag+">");
   if(selectionIsInTag){ //selection is partially in tag
     var tagStart = indexStart;
     if(isInTag(selection.anchorNode, tag)){ //selection starts in tag
@@ -293,36 +294,78 @@ function toggleTagOnSelection(tag){
         removeTag(indexStart, tag);
         return;
       }
-      else if(tagEnd===indexEnd || tagEnd==(indexEnd-(tag.length+3))){ //tag ends at selection
-        console.log("Tag ends at selection");
-        if(tagStart<indexStart){  //tag starts before selection
+      else if(tagEnd===indexEnd || tagEnd===(indexEnd-(tag.length+3))){ //tag ends at selection
+        if(tagStart===indexStart || tagStart===(indexStart+(tag.length+2))){//tag starts at selection
+          removeTag(tagStart+tag.length+3,tag);
+          return;
+        }
+        else if(tagStart<indexStart){  //tag starts before selection
           newClientText = newClientText.substring(0,indexStart)+"</"+tag+">"
               +newClientText.substring(indexStart, tagEnd)
               +newClientText.substring(tagEnd+(tag.length+3));
-          //newClientText = properlyNestTags(newClientText);
-          console.log(newClientText);
         }
-        else{
-          //move start to index start
+        else{ //tag starts in selection
+          newClientText = newClientText.substring(0,tagStart)
+              +newClientText.substring(tagStart+(tag.length+2));//remove existing start
+          newClientText = newClientText.substring(0,indexStart)+"<"+tag+">"
+              +newClientText.substring(indexStart);//add new start
+          newClientText = properlyNestTags(newClientText);
         }
       }
       else if(tagEnd<indexEnd){ //tag ends in selection
-        //move end to after selection
+        newClientText = newClientText.substring(0,tagEnd)
+            +newClientText.substring(tagEnd+(tag.length+3)); //move end to after selection
+        indexEnd -= tag.length+3;
+        newClientText = newClientText.substring(0,indexEnd)+"</"+tag+">"
+            +newClientText.substring(indexEnd);
+        if(tagStart===indexStart || tagStart===(indexStart+(tag.length+2))){//tag starts at selection
+          //No further action is neccessary
+        }
+        else if(tagStart<indexStart){  //tag starts before selection
+          //No further action is neccessary
+        }
+        else{
+          newClientText = newClientText.substring(0,tagStart)
+              +newClientText.substring(tagStart+(tag.length+2)); //remove existing tag start
+          newClientText = newClientText.substring(0,indexStart)+"<"+tag+">"
+              +newClientText.substring(indexStart); //add tag start to start of selection
+          newClientText = properlyNestTags(newClientText);
+        }
       }
       else{ //tag ends after selection
-        //
+        if(tagStart===indexStart || tagStart===(indexStart+(tag.length+2))){//tag starts at selection
+          newClientText = newClientText.substring(0,tagStart)
+              +newClientText.substring(tagStart+(tag.length+2)); //remove existing tag start
+          newClientText = newClientText.substring(0,indexEnd)+"<"+tag+">"
+              +newClientText.substring(indexEnd); //add tag start to end of selection
+          newClientText = properlyNestTags(newClientText);
+        }
+        else if(tagStart<indexStart){ //tag starts before selection
+          newClientText = newClientText.substring(0,indexEnd)+"<"+tag+">"
+              +newClientText.substring(indexEnd); //add tag start to end of selection
+          newClientText = newClientText.substring(0,indexStart)+"</"+tag+">"
+              +newClientText.substring(indexStart); //add tag end to start of selection
+          newClientText = properlyNestTags(newClientText);
+        }
+        else{ //tag starts in selection
+          newClientText = newClientText.substring(0,tagStart)
+              +newClientText.substring(tagStart+(tag.length+2)); //remove existing tag start
+          newClientText = newClientText.substring(0,indexStart)+"<"+tag+">"
+              +newClientText.substring(indexStart); //add tag start to start of selection
+          newClientText = properlyNestTags(newClientText);
+        }
       }
     }
   }
-  else{
+  else{ //selection does not have tag
     var innerStart = indexStart;
     var innerEnd = indexEnd;
-    while(clientText.charAt(innerStart)==="<"){
+    if(clientText.charAt(innerStart)==="<"){
       while(clientText.charAt(innerStart-1)!==">"){
         innerStart++;
       }
     }
-    while(clientText.charAt(innerEnd-1)===">"){
+    if(clientText.charAt(innerEnd-1)===">"){
       while(clientText.charAt(innerEnd)!=="<"){
         innerEnd--;
       }
@@ -330,7 +373,6 @@ function toggleTagOnSelection(tag){
     var newClientText = clientText.substring(0, innerStart);
     newClientText += "<"+tag+">"+clientText.substring(innerStart,innerEnd)+"</"+tag+">";
     newClientText += clientText.substring(innerEnd);
-    console.log(newClientText);
   }
   updateClientText(newClientText);
 }
@@ -351,8 +393,8 @@ function updateClientText(newText){
 
 //Rearrange tags in text so they are nested properly
 function properlyNestTags(text){
+  console.log("properlyNestTags got:",text);
   var inTags = [];
-  var allGood = true;
   var tagName;
   for(var a=0; a<text.length; a++){
     if(text.charAt(a)==="<"){
@@ -364,10 +406,35 @@ function properlyNestTags(text){
       }
       if(text.charAt(a+1)==="/"){ //hit end of tag
         tagName = tagName.substring(1); //remove '/' at beginning
-        var tempTag = inTags.pop();
-        if(tempTag!==tagName){
-          console.log("Tags are improperly nested");
-          allGood=false;
+        var tempTag = inTags.pop(); //get the name of the tag 'a' should be in
+        if(tempTag!==tagName){  //wrong tag has ended
+          var tempStart = temp;
+          while(text.substring(tempStart,tempStart+(tagName.length+2))!=="<"+tagName+">"){
+            tempStart--;
+          }
+          if(text.charAt(tempStart+(tagName.length+2))==="<"){ //tags need to be swapped
+            var tempEnd = tempStart;
+            while(text.charAt(tempEnd-1)!==">"){  //find end of second tag
+              tempEnd++;
+            }
+            var tempString = text.substring(tempStart,tempEnd);
+            var newText = text.substring(0,tempStart-(tempTag.length+2))+"<"+tempTag+">"+tempString;  //swap tags
+            newText += text.substring(tempEnd+(tempTag.length+2));
+            return properlyNestTags(newText);
+          }
+          else{ //tag needs to be split
+            tempStart++;  //skip over '<'
+            while(text.charAt(tempStart)!=="<"){
+              tempStart++;
+            }
+            var tempEnd = tempStart+1;
+            while(text.charAt(tempEnd-1)!==">"){
+              tempEnd++;
+            }
+            var newText = strInsert(text, tempEnd, "<"+tagName+">");
+            newText = strInsert(newText, tempStart, "</"+tagName+">");
+            return properlyNestTags(newText);
+          }
         }
       }
       else{ //hit beginning of tag
@@ -378,10 +445,6 @@ function properlyNestTags(text){
   }
   return text;
 }
-
-console.log(properlyNestTags("<b><u>Word</u></b>"));
-console.log(properlyNestTags("<b><u>Word</b></u>"));
-
 
 // =============================================================================
 //Update caret variable on click
